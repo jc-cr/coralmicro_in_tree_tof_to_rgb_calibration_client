@@ -87,8 +87,15 @@ class CameraViewer:
                 json={
                     'id': 1,
                     'jsonrpc': '2.0',
-                    'method': 'get_synchronized_frame',
-                    'params': []
+                    'method': 'get_image_from_camera',
+                    'params': {
+                        'width': 324,
+                        'height': 324,
+                        'format': 'RGB',
+                        'filter': 'BILINEAR',
+                        'rotation': 270,
+                        'auto_white_balance': False
+                    }
                 },
                 headers={'Content-Type': 'application/json'},
                 timeout=5.0
@@ -98,21 +105,27 @@ class CameraViewer:
         except Exception as e:
             self.logger.error(f"Error getting frame: {e}")
             return None
-            
+
     def process_frame(self, result):
         if not result or 'error' in result or 'result' not in result:
             return None
-            
+                
         try:
             result_data = result['result']
             width = result_data['width']
             height = result_data['height']
-            image_data = base64.b64decode(result_data['base64_data'])
+            frame_base64 = result_data['base64_data']
             
-            # Process image
-            np_data = np.frombuffer(image_data, dtype=np.uint8).reshape((height, width))
-            rgb_image = cv2.cvtColor(np_data, cv2.COLOR_BAYER_RG2RGB)  # Direct conversion to RGB
+            # Decode base64 data
+            frame = base64.b64decode(frame_base64)
+
+            # Convert raw bytes directly to numpy array
+            np_data = np.frombuffer(frame, dtype=np.uint8)
             
+            # Reshape to include RGB channels (height, width, 3)
+            rgb_image = np_data.reshape((height, width, 3))
+            
+            # Convert numpy array to PIL Image
             return Image.fromarray(rgb_image)
         except Exception as e:
             self.logger.error(f"Error processing frame: {e}")
