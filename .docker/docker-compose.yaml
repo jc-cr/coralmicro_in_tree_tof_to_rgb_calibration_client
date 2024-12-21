@@ -1,0 +1,21 @@
+version: '3'
+services:
+  sensor_viz:
+    user: "${UID:-1000}:${GID:-1000}"
+    build:
+      context: ..
+      dockerfile: .docker/Dockerfile
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ${XAUTHORITY:-~/.Xauthority}:/root/.Xauthority
+      - ..:/app
+    environment:
+      - DISPLAY=${DISPLAY}
+      - XAUTHORITY=/root/.Xauthority
+      - QT_X11_NO_MITSHM=1
+    network_mode: "host"
+    privileged: true
+    ipc: host  # Add this for X11 shared memory
+    stdin_open: true  # Enable stdin
+    tty: true        # Enable terminal
+    command: python3 scripts/main.py
