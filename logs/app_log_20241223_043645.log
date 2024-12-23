@@ -1,0 +1,45 @@
+2024-12-23 04:36:45,960 - __main__ - DEBUG - [setup_logging:482] - Logging configuration completed
+2024-12-23 04:36:45,960 - __main__ - DEBUG - [setup_logging:483] - Root logger level: DEBUG
+2024-12-23 04:36:45,960 - __main__ - INFO - [<module>:500] - Starting application...
+2024-12-23 04:36:46,022 - urllib3.connectionpool - DEBUG - [_new_conn:243] - Starting new HTTP connection (1): 10.10.10.1:80
+2024-12-23 04:36:46,061 - urllib3.connectionpool - DEBUG - [_make_request:546] - http://10.10.10.1:80 "POST /jsonrpc HTTP/10" 200 419971
+2024-12-23 04:36:46,192 - urllib3.connectionpool - DEBUG - [_new_conn:243] - Starting new HTTP connection (1): 10.10.10.1:80
+2024-12-23 04:36:46,231 - urllib3.connectionpool - DEBUG - [_make_request:546] - http://10.10.10.1:80 "POST /jsonrpc HTTP/10" 200 419971
+2024-12-23 04:36:46,346 - urllib3.connectionpool - DEBUG - [_new_conn:243] - Starting new HTTP connection (1): 10.10.10.1:80
+2024-12-23 04:36:46,386 - urllib3.connectionpool - DEBUG - [_make_request:546] - http://10.10.10.1:80 "POST /jsonrpc HTTP/10" 200 419971
+2024-12-23 04:36:46,509 - urllib3.connectionpool - DEBUG - [_new_conn:243] - Starting new HTTP connection (1): 10.10.10.1:80
+2024-12-23 04:36:46,548 - urllib3.connectionpool - DEBUG - [_make_request:546] - http://10.10.10.1:80 "POST /jsonrpc HTTP/10" 200 419971
+2024-12-23 04:36:46,681 - urllib3.connectionpool - DEBUG - [_new_conn:243] - Starting new HTTP connection (1): 10.10.10.1:80
+2024-12-23 04:36:46,721 - urllib3.connectionpool - DEBUG - [_make_request:546] - http://10.10.10.1:80 "POST /jsonrpc HTTP/10" 200 419971
+2024-12-23 04:36:46,849 - urllib3.connectionpool - DEBUG - [_new_conn:243] - Starting new HTTP connection (1): 10.10.10.1:80
+2024-12-23 04:36:46,887 - urllib3.connectionpool - DEBUG - [_make_request:546] - http://10.10.10.1:80 "POST /jsonrpc HTTP/10" 200 419971
+2024-12-23 04:36:47,002 - urllib3.connectionpool - DEBUG - [_new_conn:243] - Starting new HTTP connection (1): 10.10.10.1:80
+2024-12-23 04:36:47,041 - urllib3.connectionpool - DEBUG - [_make_request:546] - http://10.10.10.1:80 "POST /jsonrpc HTTP/10" 200 419971
+2024-12-23 04:36:47,166 - urllib3.connectionpool - DEBUG - [_new_conn:243] - Starting new HTTP connection (1): 10.10.10.1:80
+2024-12-23 04:36:47,206 - urllib3.connectionpool - DEBUG - [_make_request:546] - http://10.10.10.1:80 "POST /jsonrpc HTTP/10" 200 419971
+2024-12-23 04:36:47,336 - urllib3.connectionpool - DEBUG - [_new_conn:243] - Starting new HTTP connection (1): 10.10.10.1:80
+2024-12-23 04:36:47,376 - urllib3.connectionpool - DEBUG - [_make_request:546] - http://10.10.10.1:80 "POST /jsonrpc HTTP/10" 200 419971
+2024-12-23 04:36:47,506 - urllib3.connectionpool - DEBUG - [_new_conn:243] - Starting new HTTP connection (1): 10.10.10.1:80
+2024-12-23 04:36:47,545 - urllib3.connectionpool - DEBUG - [_make_request:546] - http://10.10.10.1:80 "POST /jsonrpc HTTP/10" 200 419971
+2024-12-23 04:36:47,677 - urllib3.connectionpool - DEBUG - [_new_conn:243] - Starting new HTTP connection (1): 10.10.10.1:80
+2024-12-23 04:36:47,718 - urllib3.connectionpool - DEBUG - [_make_request:546] - http://10.10.10.1:80 "POST /jsonrpc HTTP/10" 200 419971
+2024-12-23 04:36:47,848 - urllib3.connectionpool - DEBUG - [_new_conn:243] - Starting new HTTP connection (1): 10.10.10.1:80
+2024-12-23 04:36:47,888 - urllib3.connectionpool - DEBUG - [_make_request:546] - http://10.10.10.1:80 "POST /jsonrpc HTTP/10" 200 419971
+2024-12-23 04:36:48,020 - urllib3.connectionpool - DEBUG - [_new_conn:243] - Starting new HTTP connection (1): 10.10.10.1:80
+2024-12-23 04:36:48,060 - urllib3.connectionpool - DEBUG - [_make_request:546] - http://10.10.10.1:80 "POST /jsonrpc HTTP/10" 200 419971
+2024-12-23 04:36:48,193 - urllib3.connectionpool - DEBUG - [_new_conn:243] - Starting new HTTP connection (1): 10.10.10.1:80
+2024-12-23 04:36:48,233 - urllib3.connectionpool - DEBUG - [_make_request:546] - http://10.10.10.1:80 "POST /jsonrpc HTTP/10" 200 419971
+2024-12-23 04:36:48,362 - urllib3.connectionpool - DEBUG - [_new_conn:243] - Starting new HTTP connection (1): 10.10.10.1:80
+2024-12-23 04:36:48,401 - urllib3.connectionpool - DEBUG - [_make_request:546] - http://10.10.10.1:80 "POST /jsonrpc HTTP/10" 200 419971
+2024-12-23 04:36:48,520 - urllib3.connectionpool - DEBUG - [_new_conn:243] - Starting new HTTP connection (1): 10.10.10.1:80
+2024-12-23 04:36:48,559 - urllib3.connectionpool - DEBUG - [_make_request:546] - http://10.10.10.1:80 "POST /jsonrpc HTTP/10" 200 419971
+2024-12-23 04:36:48,693 - urllib3.connectionpool - DEBUG - [_new_conn:243] - Starting new HTTP connection (1): 10.10.10.1:80
+2024-12-23 04:36:48,733 - urllib3.connectionpool - DEBUG - [_make_request:546] - http://10.10.10.1:80 "POST /jsonrpc HTTP/10" 200 419971
+2024-12-23 04:36:48,857 - urllib3.connectionpool - DEBUG - [_new_conn:243] - Starting new HTTP connection (1): 10.10.10.1:80
+2024-12-23 04:36:48,896 - urllib3.connectionpool - DEBUG - [_make_request:546] - http://10.10.10.1:80 "POST /jsonrpc HTTP/10" 200 419971
+2024-12-23 04:36:49,025 - urllib3.connectionpool - DEBUG - [_new_conn:243] - Starting new HTTP connection (1): 10.10.10.1:80
+2024-12-23 04:36:49,064 - urllib3.connectionpool - DEBUG - [_make_request:546] - http://10.10.10.1:80 "POST /jsonrpc HTTP/10" 200 419971
+2024-12-23 04:36:49,195 - urllib3.connectionpool - DEBUG - [_new_conn:243] - Starting new HTTP connection (1): 10.10.10.1:80
+2024-12-23 04:36:49,234 - urllib3.connectionpool - DEBUG - [_make_request:546] - http://10.10.10.1:80 "POST /jsonrpc HTTP/10" 200 419971
+2024-12-23 04:36:49,369 - urllib3.connectionpool - DEBUG - [_new_conn:243] - Starting new HTTP connection (1): 10.10.10.1:80
+2024-12-23 04:36:49,408 - urllib3.connectionpool - DEBUG - [_make_request:546] - http://10.10.10.1:80 "POST /jsonrpc HTTP/10" 200 419971
