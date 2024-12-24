@@ -174,6 +174,17 @@ class AlignedDepthPublisher:
         self.camera_subscriber = camera_subscriber
         self.tof_subscriber = tof_subscriber
         self.logger = logging.getLogger(self.__class__.__name__)
+        
+        # Camera parameters
+        self.cam_width = 324
+        self.cam_height = 324
+        self.cam_fov = 110  # degrees
+        self.tof_fov = 65   # degrees
+        self.focal_length = (self.cam_width/2) / math.tan(math.radians(self.cam_fov/2))
+        
+        # Physical setup
+        self.sensor_offset = (-1.4, 15.47, -13.15)  # mm
+        self.max_distance = 4000  # mm
 
     def process_camera_frame(self, frame_data):
         if not frame_data or 'error' in frame_data or 'result' not in frame_data:
@@ -203,84 +214,100 @@ class AlignedDepthPublisher:
         return self.align_depth_to_rgb(rgb_frame, tof_data)
 
     def align_depth_to_rgb(self, rgb_frame, tof_data):
-        """
-        Aligns TOF data with RGB frame and creates overlay visualization
-        """
         if not tof_data or 'error' in tof_data or 'result' not in tof_data:
             return None
             
         try:
             frame = rgb_frame.copy()
             overlay = frame.copy()
-            
-            # Camera parameters
-            cam_width = 324
-            cam_height = 324
-            cam_fov = 110  # diagonal FOV
-            tof_fov = 65   # diagonal FOV
-            
-            # Calculate scaling factors based on FOV difference
-            scale_factor = math.tan(math.radians(cam_fov/2)) / math.tan(math.radians(tof_fov/2))
-            cell_size = 30  # Size of overlay squares in pixels
+            debug_overlay = np.zeros_like(frame)  # For debugging projection
             
             # Get distances
             distances = tof_data['result']['distances']
-            max_distance = 4000  # 400cm in mm
+            cell_points = []  # Store projected points for cell rendering
             
-            # Project each TOF point onto RGB frame
+            # Project each TOF point
             for row in range(8):
                 for col in range(8):
                     idx = row * 8 + col
-                    distance = distances[idx]
+                    depth = distances[idx]
                     
-                    # Convert grid position to normalized coordinates (-1 to 1)
-                    x_norm = (col - 3.5) / 4
-                    y_norm = (row - 3.5) / 4
+                    if depth <= 0:  # Skip invalid measurements
+                        continue
                     
-                    # Apply scaling and centering
-                    center_x = int((x_norm * scale_factor * cam_width/2) + cam_width/2)
-                    center_y = int((y_norm * scale_factor * cam_height/2) + cam_height/2)
+                    # Calculate ray angles from center
+                    theta_x = math.radians((col - 3.5) * (self.tof_fov/8))
+                    theta_y = math.radians((row - 3.5) * (self.tof_fov/8))
                     
-                    # Calculate cell corners
-                    x1 = center_x - cell_size//2
-                    y1 = center_y - cell_size//2
-                    x2 = x1 + cell_size
-                    y2 = y1 + cell_size
+                    # Create normalized ray vector
+                    ray_x = math.sin(theta_x)
+                    ray_y = math.sin(theta_y)
+                    ray_z = math.sqrt(1 - ray_x*ray_x - ray_y*ray_y)
                     
-                    # Ensure within bounds
-                    x1 = max(0, min(x1, cam_width-1))
-                    y1 = max(0, min(y1, cam_height-1))
-                    x2 = max(0, min(x2, cam_width-1))
-                    y2 = max(0, min(y2, cam_height-1))
+                    # Get 3D point in ToF frame
+                    x = depth * ray_x
+                    y = depth * ray_y
+                    z = depth * ray_z
                     
-                    # Calculate color based on distance
-                    ratio = max(0, min(1, 1 - (distance / max_distance)))
-                    green = max(0, min(255, int(255 * ratio)))
-                    color = (0, green, 0)  # BGR format
+                    # Transform to camera frame
+                    x_cam = x + self.sensor_offset[0]
+                    y_cam = y + self.sensor_offset[1]
+                    z_cam = z + self.sensor_offset[2]
                     
-                    # Draw semi-transparent cell
-                    cv2.rectangle(overlay, (x1, y1), (x2, y2), color, -1)
-                    
-                    # Add distance text if space permits
-                    if (x2 - x1) > 20 and (y2 - y1) > 10:  # Only if cell is big enough
-                        cv2.putText(overlay, 
-                                f"{distance}", 
-                                (x1 + 2, y1 + cell_size//2),
-                                cv2.FONT_HERSHEY_SIMPLEX, 
-                                0.3,
-                                (255,255,255),
-                                1)
-                        cv2.putText(overlay, 
-                            f"#{idx}", 
-                            (x1 + 2, y2 - 5),
-                            cv2.FONT_HERSHEY_SIMPLEX, 
-                            0.3,
-                            (255,255,255),
-                            1)
+                    # Project to image plane
+                    if z_cam > 0:
+                        u = int(self.focal_length * (x_cam / z_cam) + self.cam_width/2)
+                        v = int(self.focal_length * (y_cam / z_cam) + self.cam_height/2)
+                        
+                        # Store point if within frame
+                        if 0 <= u < self.cam_width and 0 <= v < self.cam_height:
+                            cell_points.append((u, v, depth, idx))
+                            
+                            # Draw debug point
+                            cv2.circle(debug_overlay, (u, v), 2, (0, 255, 0), -1)
+            
+            # Draw cells and depth information
+            for u, v, depth, idx in cell_points:
+                # Calculate color based on depth
+                ratio = max(0, min(1, 1 - (depth / self.max_distance)))
+                green = max(0, min(255, int(255 * ratio)))
+                color = (0, green, 0)  # BGR format
+                
+                # Draw cell with adaptive size based on depth
+                cell_size = int(30 * (1000 / max(depth, 1000)))  # Larger cells for closer objects
+                x1 = max(0, u - cell_size//2)
+                y1 = max(0, v - cell_size//2)
+                x2 = min(self.cam_width-1, u + cell_size//2)
+                y2 = min(self.cam_height-1, v + cell_size//2)
+                
+                # Draw semi-transparent cell
+                cv2.rectangle(overlay, (x1, y1), (x2, y2), color, -1)
+                
+                # Add text info if cell is big enough
+                if cell_size > 20:
+                    # Distance text
+                    cv2.putText(overlay, 
+                              f"{depth}mm", 
+                              (x1 + 2, y1 + cell_size//2),
+                              cv2.FONT_HERSHEY_SIMPLEX, 
+                              0.3,
+                              (255, 255, 255),
+                              1)
+                    # Cell ID
+                    cv2.putText(overlay, 
+                              f"#{idx}", 
+                              (x1 + 2, y2 - 5),
+                              cv2.FONT_HERSHEY_SIMPLEX, 
+                              0.3,
+                              (255, 255, 255),
+                              1)
             
             # Blend overlay with original frame
-            alpha = 0.3  # Transparency factor
+            alpha = 0.3
             result = cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0)
+            
+            # Add debug visualization
+            result = cv2.addWeighted(result, 0.7, debug_overlay, 0.3, 0)
             
             # Convert to PIL Image
             return Image.fromarray(result)
@@ -298,6 +325,7 @@ class Visualizer:
         self.tof_subscriber = tof_subscriber
         self.aligned_publisher = aligned_depth_publisher
         self.current_topic = Topic.CAMERA.value
+        self.current_frame = None
         
         self.root = tk.Tk()
         self.setup_gui()
@@ -351,7 +379,9 @@ class Visualizer:
         # Control buttons
         btn_frame = ttk.Frame(self.frame)
         btn_frame.grid(row=3, column=0, pady=5)
+
         ttk.Button(btn_frame, text="Quit", command=self.quit).pack(side=tk.RIGHT)
+        ttk.Button(btn_frame, text="Save Image", command=self.save_image).pack(side=tk.RIGHT)
         
         self.root.protocol("WM_DELETE_WINDOW", self.quit)
 
@@ -365,8 +395,9 @@ class Visualizer:
             if response:
                 image = self.camera_subscriber.process_camera_frame(response)
                 if image:
+                    self.current_frame = image
                     display_size = (640, 480)
-                    image = image.resize(display_size, Image.LANCZOS)
+                    image = image.resize(display_size, Image.BILINEAR)
                     photo = ImageTk.PhotoImage(image)
                     self.image_label.configure(image=photo)
                     self.image_label.image = photo
@@ -378,11 +409,13 @@ class Visualizer:
                 photo = ImageTk.PhotoImage(tof_image)
                 self.image_label.configure(image=photo)
                 self.image_label.image = photo
+                self.current_frame = tof_image
                 self.status_var.set(f"Status: TOF Running (Temp: {temperature}°C)")
 
         elif self.current_topic == Topic.ALIGNED_DEPTH_FRAME.value:
             aligned_frame = self.aligned_publisher.get_aligned_frame()
             if aligned_frame:
+                self.current_frame = aligned_frame
                 display_size = (640, 480)
                 aligned_frame = aligned_frame.resize(display_size, Image.LANCZOS)
                 photo = ImageTk.PhotoImage(aligned_frame)
@@ -393,6 +426,14 @@ class Visualizer:
         # Schedule next update
         self.root.after(33, self.update_display)  # ~30 FPS
         
+    def save_image(self):
+        img_filename = f"image_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+        img_path = os.path.join("saved_images", img_filename)
+
+        if self.current_frame:
+            self.current_frame.save(img_path)
+            self.status_var.set(f"Status: Image saved to {img_path}")
+
     def quit(self):
         self.root.quit()
         

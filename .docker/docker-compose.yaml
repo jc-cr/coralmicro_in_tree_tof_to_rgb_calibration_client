@@ -18,4 +18,7 @@ services:
     ipc: host  # Add this for X11 shared memory
     stdin_open: true  # Enable stdin
     tty: true        # Enable terminal
-    command: bash -c "python3 /app/scripts/main.py"
+    command: bash -c "python3 /app/scripts/viz.py"
+
+  calc_intrinsics:
+      user: "${UID:-1000}:${GID:-1000}"
