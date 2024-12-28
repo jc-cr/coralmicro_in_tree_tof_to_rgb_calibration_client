@@ -23,13 +23,94 @@ class Topic(Enum):
     TOF = "tof"
     ALIGNED_DEPTH_FRAME = "aligned_depth_frame"
 
+
+class CameraCalibrationParams:
+    def __init__(self, calibration_json_path):
+        try:
+            self.calibration_json_path = calibration_json_path
+
+            # Default calibration data
+            self.camera_matrix = None
+            self.distortion_coeffs = None
+            self.image_size = None
+            self.reprojection_error = None
+            self.logger = logging.getLogger(self.__class__.__name__)
+
+            self.__load_calibration_data()
+
+        except Exception as e:
+            self.logger.error(f"Error loading calibration data: {e}")
+            raise e
+
+    def __load_calibration_data(self):
+        try:
+            with open(self.calibration_json_path, 'r') as f:
+                data = json.load(f)
+                self.camera_matrix = np.array(data['camera_matrix'])
+                self.distortion_coeffs = np.array(data['dist_coeffs'])
+                self.image_size = tuple(data['image_size'])
+                self.reprojection_error = data['reprojection_error']
+
+            self.logger.info(f"Loaded calibration data from {self.calibration_json_path}")
+            self.logger.info(f"Camera matrix: {self.camera_matrix}")
+            self.logger.info(f"Distortion coefficients: {self.distortion_coeffs}")
+            self.logger.info(f"Image size: {self.image_size}")
+            self.logger.info(f"Reprojection error: {self.reprojection_error}")
+
+        except Exception as e:
+            raise e
+
+
 class CameraSubscriber:
     """Handles camera data acquisition"""
-    def __init__(self, ip="10.10.10.1"):
-        self.ip = ip
-        self.logger = logging.getLogger(self.__class__.__name__)
+    def __init__(self, ip="10.10.10.1", calibration_params=None):
+        try:
+            self.ip = ip
+            self.logger = logging.getLogger(self.__class__.__name__)
 
-    def get_frame(self):
+            # User camera settings
+            self.rotation = 270
+            self.auto_white_balance = False
+            
+            # Camera parameters 
+            self.camera_fov_diagonal = np.radians(110)
+            self.camera_width = 324
+            self.camera_height = 324
+            self.camera_center_x = self.camera_width / 2
+            self.camera_center_y = self.camera_height / 2
+
+            # Camera calibration parameters
+            self.calibration_params = calibration_params
+
+        except Exception as e:
+            self.logger.error(f"Error initializing camera subscriber: {e}")
+            raise e
+
+    def get_rgb_frame(self):
+        result = self.__get_frame_data()
+
+        if not result or 'error' in result or 'result' not in result:
+            return None
+                
+        try:
+            # Use data from the result to create a PIL Image
+            result_data = result['result']
+            width = result_data['width']
+            height = result_data['height']
+            frame_base64 = result_data['base64_data']
+            
+            frame = base64.b64decode(frame_base64)
+            np_data = np.frombuffer(frame, dtype=np.uint8)
+            rgb_image = np_data.reshape((height, width, 3))
+
+            return Image.fromarray(rgb_image)
+
+        except Exception as e:
+            self.logger.error(f"Error processing camera frame: {e}")
+            return None
+
+
+    def __get_frame_data(self):
         try:
             response = requests.post(
                 f'http://{self.ip}/jsonrpc',
@@ -38,12 +119,12 @@ class CameraSubscriber:
                     'jsonrpc': '2.0',
                     'method': 'get_image_from_camera',
                     'params': {
-                        'width': 324,
-                        'height': 324,
+                        'width': self.camera_width,
+                        'height': self.camera_height,
                         'format': 'RGB',
                         'filter': 'BILINEAR',
-                        'rotation': 270,
-                        'auto_white_balance': False
+                        'rotation': self.rotation,
+                        'auto_white_balance': self.auto_white_balance,
                     }
                 },
                 headers={'Content-Type': 'application/json'},
@@ -54,39 +135,49 @@ class CameraSubscriber:
             self.logger.error(f"Error getting camera frame: {e}")
             return None
 
-        
-    def process_camera_frame(self, result):
-        if not result or 'error' in result or 'result' not in result:
-            return None
-                
-        try:
-            result_data = result['result']
-            width = result_data['width']
-            height = result_data['height']
-            frame_base64 = result_data['base64_data']
-            
-            frame = base64.b64decode(frame_base64)
-            np_data = np.frombuffer(frame, dtype=np.uint8)
-            rgb_image = np_data.reshape((height, width, 3))
-            return Image.fromarray(rgb_image)
-        except Exception as e:
-            self.logger.error(f"Error processing camera frame: {e}")
-            return None
 
 class TofSubscriber:
     """Handles TOF data acquisition and visualization"""
     def __init__(self, ip="10.10.10.1"):
         self.ip = ip
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.max_distance = 4000  # 400cm in mm
-        self.grid_size = (8, 8)
-
-    def create_tof_visualization(self, result, size=(640, 480)):
-        """Creates a PIL Image visualization of TOF data"""
-        if not result or 'error' in result or 'result' not in result:
-            return None
         
+
+        # TOF parameters
+        self.tof_fov_horizontal = np.radians(45)
+        self.tof_fov_vertical = np.radians(45)
+        self.tof_grid_size = np.array([8, 8])
+
+        self.max_distance = 4000  # 400cm in mm
+
+    def get_tof_data(self):
+        """Gets raw TOF data"""
         try:
+            response = requests.post(
+                f'http://{self.ip}/jsonrpc',
+                json={
+                    'id': 1,
+                    'jsonrpc': '2.0',
+                    'method': 'get_tof_grid',
+                    'params': []
+                },
+                headers={'Content-Type': 'application/json'},
+                timeout=5.0
+            )
+            return response.json()
+
+        except Exception as e:
+            self.logger.error(f"Error getting TOF grid: {e}")
+            return None
+
+    def get_tof_frame(self, size=(640, 480)):
+        """Creates a PIL Image visualization of TOF data"""
+        try:
+            result = self.get_tof_data()
+
+            if not result or 'error' in result or 'result' not in result:
+                return None
+        
             result_data = result['result']
             distances = result_data['distances']
             temperature = result_data['temperature']
@@ -95,11 +186,11 @@ class TofSubscriber:
             img = np.zeros((size[1], size[0], 3), dtype=np.uint8)
             
             # Calculate cell sizes
-            cell_width = size[0] // self.grid_size[0]
-            cell_height = size[1] // self.grid_size[1]
+            cell_width = size[0] // self.tof_grid_size[0]
+            cell_height = size[1] // self.tof_grid_size[1]
             
-            for row in range(self.grid_size[1]):
-                for col in range(self.grid_size[0]):
+            for row in range(self.tof_grid_size[1]):
+                for col in range(self.tof_grid_size[0]):
                     # Calculate cell position
                     x1 = col * cell_width
                     y1 = row * cell_height
@@ -107,7 +198,7 @@ class TofSubscriber:
                     y2 = y1 + cell_height
                     
                     # Get distance value and calculate color
-                    idx = row * self.grid_size[0] + col
+                    idx = row * self.tof_grid_size[0] + col
                     distance = distances[idx]
                     ratio = max(0, min(1, 1 - (distance / self.max_distance)))
                     green = max(0, min(255, int(255 * ratio)))
@@ -139,197 +230,199 @@ class TofSubscriber:
             
         except Exception as e:
             self.logger.error(f"Error creating TOF visualization: {e}", exc_info=True)
-            return None, None
-
-    def get_frame(self):
-        """Gets TOF data and returns visualization"""
-        response = self.get_grid()
-        if response:
-            return self.create_tof_visualization(response)
-        return None, None
-
-    def get_grid(self):
-        """Gets raw TOF data"""
-        try:
-            response = requests.post(
-                f'http://{self.ip}/jsonrpc',
-                json={
-                    'id': 1,
-                    'jsonrpc': '2.0',
-                    'method': 'get_tof_grid',
-                    'params': []
-                },
-                headers={'Content-Type': 'application/json'},
-                timeout=5.0
-            )
-            return response.json()
-        except Exception as e:
-            self.logger.error(f"Error getting TOF grid: {e}")
-            return None
+            raise e
 
 
 class AlignedDepthPublisher:
     """Handles alignment and processing of camera and TOF data"""
     def __init__(self, camera_subscriber, tof_subscriber):
-        self.camera_subscriber = camera_subscriber
-        self.tof_subscriber = tof_subscriber
-        self.logger = logging.getLogger(self.__class__.__name__)
-        
-        # Camera parameters
-        self.cam_width = 324
-        self.cam_height = 324
-        self.cam_fov = 110  # degrees
-        self.tof_fov = 65   # degrees
-        self.focal_length = (self.cam_width/2) / math.tan(math.radians(self.cam_fov/2))
-        
-        # Physical setup
-        self.sensor_offset = (-1.4, 15.47, -13.15)  # mm
-        self.max_distance = 4000  # mm
 
-    def process_camera_frame(self, frame_data):
-        if not frame_data or 'error' in frame_data or 'result' not in frame_data:
-            return None
-        
+        self.logger = logging.getLogger(self.__class__.__name__)
         try:
-            result_data = frame_data['result']
-            frame_base64 = result_data['base64_data']
-            frame = base64.b64decode(frame_base64)
-            np_data = np.frombuffer(frame, dtype=np.uint8)
-            return np_data.reshape((result_data['height'], result_data['width'], 3))
+
+            self.camera_subscriber = camera_subscriber
+            self.tof_subscriber = tof_subscriber
+            
+            # Physical setup
+            # x, y, z offset of TOF sensor relative to camera
+            self.sensor_offset = np.array([-1.4, 15.47, -13.15]) # mm relative to camera
+
+            # Camera parameters (from calibration)
+            self.camera_matrix = camera_subscriber.calibration_params.camera_matrix
+            self.dist_coeffs = camera_subscriber.calibration_params.distortion_coeffs
+            
+
+            # TOF parameters
+            self.tof_grid_size = tof_subscriber.tof_grid_size
+            self.tof_fov_h = tof_subscriber.tof_fov_horizontal
+            self.tof_fov_v = tof_subscriber.tof_fov_vertical
+
+
+
         except Exception as e:
-            self.logger.error(f"Error processing camera frame: {e}")
-            return None
+            self.logger.error(f"Error initializing aligned depth publisher: {e}")
+            raise e
+
 
     def get_aligned_frame(self):
-        camera_data = self.camera_subscriber.get_frame()
-        tof_data = self.tof_subscriber.get_grid()
-        
-        if not camera_data or not tof_data:
-            return None
-
-        rgb_frame = self.process_camera_frame(camera_data)
-        if rgb_frame is None:
-            return None
-
-        return self.align_depth_to_rgb(rgb_frame, tof_data)
-
-    def align_depth_to_rgb(self, rgb_frame, tof_data):
-        if not tof_data or 'error' in tof_data or 'result' not in tof_data:
-            return None
-            
         try:
-            frame = rgb_frame.copy()
+            sensor_data = self.__get_sensor_data()
+            if not sensor_data:
+                return None
+
+            rgb_frame, distances = sensor_data
+            frame = np.array(rgb_frame)
+            
+            # 1. Convert TOF data to 3D points
+            points_3d = self.__process_tof_data(distances)
+            
+            # 2. Transform to camera coordinate system
+            points_camera = self.__transform_to_camera_space(points_3d)
+            
+            # 3. Project to image plane
+            points_2d = self.__project_to_image(points_camera)
+            
+            # Visualization (separate from the projection math)
+            return self.__create_visualization(frame, points_2d, distances)
+        
+        except Exception as e:
+            self.logger.error(f"Error getting aligned frame: {e}", exc_info=True)
+            raise e
+
+    def __process_tof_data(self, distances):
+        points_3d = []
+        distances_array = np.array(distances).reshape(self.tof_grid_size[0], self.tof_grid_size[1])
+        
+        # Center of the grid should be between pixels
+        center_x = (self.tof_grid_size[0] - 1) / 2
+        center_y = (self.tof_grid_size[1] - 1) / 2
+        
+        for i in range(self.tof_grid_size[0]):
+            for j in range(self.tof_grid_size[1]):
+                distance = distances_array[i, j]
+                if distance <= 0 or distance > 4000:  # Add maximum distance check
+                    continue
+                    
+                # Calculate angles relative to center more precisely
+                theta_h = ((i - center_x)/center_x) * (self.tof_fov_h/2)
+                theta_v = ((j - center_y)/center_y) * (self.tof_fov_v/2)
+                
+                # Convert to 3D coordinates in TOF space
+                Z = distance * np.cos(theta_h) * np.cos(theta_v)  # Corrected depth
+                X = distance * np.sin(theta_h)
+                Y = distance * np.sin(theta_v)
+                
+                points_3d.append([X, Y, Z])
+                    
+        return np.array(points_3d)
+
+    def __transform_to_camera_space(self, points_3d):
+        """Step 2: Transform TOF points to camera coordinate system"""
+        # Simply add the offset to each point
+        # offset is [-1.4, 15.47, -13.15] in mm
+        return points_3d + self.sensor_offset
+
+    def __project_to_image(self, points_camera):
+        points_2d = []
+        valid_points = []
+        
+        for point in points_camera:
+            # More stringent depth check
+            if point[2] < 10 or point[2] > 4000:  # Invalid if too close or too far
+                continue
+                
+            # Normalized coordinates
+            x_normalized = point[0] / point[2]
+            y_normalized = point[1] / point[2]
+            
+            # Apply camera matrix
+            u = self.camera_matrix[0,0] * x_normalized + self.camera_matrix[0,2]
+            v = self.camera_matrix[1,1] * y_normalized + self.camera_matrix[1,2]
+            
+            # Check if point projects within image bounds with margin
+            if (5 <= u < self.camera_subscriber.camera_width-5 and 
+                5 <= v < self.camera_subscriber.camera_height-5):
+                points_2d.append([u, v])
+                valid_points.append(True)
+            else:
+                valid_points.append(False)
+                    
+        return np.array(points_2d)
+
+        
+    def __get_sensor_data(self):
+        tof_data = self.tof_subscriber.get_tof_data()
+        rgb_frame = self.camera_subscriber.get_rgb_frame()
+
+        if not rgb_frame or not tof_data:
+            return None
+
+        else:
+            result_data = tof_data['result']
+            distances = result_data['distances']
+
+        return rgb_frame, distances
+
+    def __create_visualization(self, frame, points_2d, distances):
+        """Create visualization of projected TOF points on RGB frame"""
+        try:
             overlay = frame.copy()
-            debug_overlay = np.zeros_like(frame)  # For debugging projection
+            distances_array = np.array(distances).reshape(self.tof_grid_size)
             
-            # Get distances
-            distances = tof_data['result']['distances']
-            cell_points = []  # Store projected points for cell rendering
+            # Fixed size for visualization since sensor setup is static
+            cell_size = 10  # Fixed size in pixels
             
-            # Project each TOF point
-            for row in range(8):
-                for col in range(8):
-                    idx = row * 8 + col
-                    depth = distances[idx]
-                    
-                    if depth <= 0:  # Skip invalid measurements
-                        continue
-                    
-                    # Calculate ray angles from center
-                    theta_x = math.radians((col - 3.5) * (self.tof_fov/8))
-                    theta_y = math.radians((row - 3.5) * (self.tof_fov/8))
-                    
-                    # Create normalized ray vector
-                    ray_x = math.sin(theta_x)
-                    ray_y = math.sin(theta_y)
-                    ray_z = math.sqrt(1 - ray_x*ray_x - ray_y*ray_y)
-                    
-                    # Get 3D point in ToF frame
-                    x = depth * ray_x
-                    y = depth * ray_y
-                    z = depth * ray_z
-                    
-                    # Transform to camera frame
-                    x_cam = x + self.sensor_offset[0]
-                    y_cam = y + self.sensor_offset[1]
-                    z_cam = z + self.sensor_offset[2]
-                    
-                    # Project to image plane
-                    if z_cam > 0:
-                        u = int(self.focal_length * (x_cam / z_cam) + self.cam_width/2)
-                        v = int(self.focal_length * (y_cam / z_cam) + self.cam_height/2)
-                        
-                        # Store point if within frame
-                        if 0 <= u < self.cam_width and 0 <= v < self.cam_height:
-                            cell_points.append((u, v, depth, idx))
-                            
-                            # Draw debug point
-                            cv2.circle(debug_overlay, (u, v), 2, (0, 255, 0), -1)
-            
-            # Draw cells and depth information
-            for u, v, depth, idx in cell_points:
-                # Calculate color based on depth
-                ratio = max(0, min(1, 1 - (depth / self.max_distance)))
-                green = max(0, min(255, int(255 * ratio)))
-                color = (0, green, 0)  # BGR format
+            for idx, point in enumerate(points_2d):
+                u, v = point.astype(int)
                 
-                # Draw cell with adaptive size based on depth
-                cell_size = int(30 * (1000 / max(depth, 1000)))  # Larger cells for closer objects
-                x1 = max(0, u - cell_size//2)
-                y1 = max(0, v - cell_size//2)
-                x2 = min(self.cam_width-1, u + cell_size//2)
-                y2 = min(self.cam_height-1, v + cell_size//2)
-                
-                # Draw semi-transparent cell
-                cv2.rectangle(overlay, (x1, y1), (x2, y2), color, -1)
-                
-                # Add text info if cell is big enough
-                if cell_size > 20:
-                    # Distance text
-                    cv2.putText(overlay, 
-                              f"{depth}mm", 
-                              (x1 + 2, y1 + cell_size//2),
-                              cv2.FONT_HERSHEY_SIMPLEX, 
-                              0.3,
-                              (255, 255, 255),
-                              1)
-                    # Cell ID
-                    cv2.putText(overlay, 
-                              f"#{idx}", 
-                              (x1 + 2, y2 - 5),
-                              cv2.FONT_HERSHEY_SIMPLEX, 
-                              0.3,
-                              (255, 255, 255),
-                              1)
+                # Only draw if point is within image bounds
+                if (0 <= u < frame.shape[1] and 0 <= v < frame.shape[0]):
+                    i = idx // self.tof_grid_size[0]
+                    j = idx % self.tof_grid_size[0]
+                    depth = distances_array[i, j]
+                    
+                    # Simple color based on depth (closer = more intense green)
+                    intensity = int(255 * (1 - min(depth, 4000) / 4000))
+                    color = (0, intensity, 0)
+                    
+                    # Draw fixed-size rectangle centered on projected point
+                    x1 = max(0, u - cell_size//2)
+                    y1 = max(0, v - cell_size//2)
+                    x2 = min(frame.shape[1]-1, u + cell_size//2)
+                    y2 = min(frame.shape[0]-1, v + cell_size//2)
+                    
+                    cv2.rectangle(overlay, (x1, y1), (x2, y2), color, -1)
             
             # Blend overlay with original frame
-            alpha = 0.3
-            result = cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0)
-            
-            # Add debug visualization
-            result = cv2.addWeighted(result, 0.7, debug_overlay, 0.3, 0)
-            
-            # Convert to PIL Image
+            result = cv2.addWeighted(overlay, 0.3, frame, 0.7, 0)
             return Image.fromarray(result)
-            
+                
         except Exception as e:
-            self.logger.error(f"Error aligning depth to RGB: {e}", exc_info=True)
+            self.logger.error(f"Error creating visualization: {e}")
             return None
-
 
 
 class Visualizer:
     """Handles all visualization components"""
     def __init__(self, camera_subscriber, tof_subscriber, aligned_depth_publisher):
-        self.camera_subscriber = camera_subscriber
-        self.tof_subscriber = tof_subscriber
-        self.aligned_publisher = aligned_depth_publisher
-        self.current_topic = Topic.CAMERA.value
-        self.current_frame = None
+
+        try:
+            self.logger = logging.getLogger(self.__class__.__name__)
+            self.camera_subscriber = camera_subscriber
+            self.tof_subscriber = tof_subscriber
+            self.aligned_publisher = aligned_depth_publisher
+
+            self.current_topic = Topic.CAMERA.value
+            self.current_frame = None
+            
+            self.root = tk.Tk()
+            self.setup_gui()
+
+        except Exception as e:
+            self.logger.error(f"Error initializing visualizer: {e}")
+            raise e
         
-        self.root = tk.Tk()
-        self.setup_gui()
-        
+    
     def setup_gui(self):
         self.root.geometry("800x600")
         
@@ -391,21 +484,25 @@ class Visualizer:
     
     def update_display(self):
         if self.current_topic == Topic.CAMERA.value:
-            response = self.camera_subscriber.get_frame()
-            if response:
-                image = self.camera_subscriber.process_camera_frame(response)
-                if image:
-                    self.current_frame = image
-                    display_size = (640, 480)
-                    image = image.resize(display_size, Image.BILINEAR)
-                    photo = ImageTk.PhotoImage(image)
-                    self.image_label.configure(image=photo)
-                    self.image_label.image = photo
-                    self.status_var.set("Status: Camera Running")
+            image = self.camera_subscriber.get_rgb_frame()
+
+            if image:
+                self.current_frame = image
+                display_size = (640, 480)
+                # See https://zuru.tech/blog/the-dangers-behind-image-resizing for details on image resizing issues
+                image = image.resize(display_size, Image.BILINEAR)
+
+                photo = ImageTk.PhotoImage(image)
+
+                self.image_label.configure(image=photo)
+                self.image_label.image = photo
+                self.status_var.set("Status: Camera Running")
                     
         elif self.current_topic == Topic.TOF.value:
-            tof_image, temperature = self.tof_subscriber.get_frame()
-            if tof_image:
+            result = self.tof_subscriber.get_tof_frame()
+
+            if result:
+                tof_image, temperature = result
                 photo = ImageTk.PhotoImage(tof_image)
                 self.image_label.configure(image=photo)
                 self.image_label.image = photo
@@ -414,6 +511,7 @@ class Visualizer:
 
         elif self.current_topic == Topic.ALIGNED_DEPTH_FRAME.value:
             aligned_frame = self.aligned_publisher.get_aligned_frame()
+
             if aligned_frame:
                 self.current_frame = aligned_frame
                 display_size = (640, 480)
@@ -421,6 +519,7 @@ class Visualizer:
                 photo = ImageTk.PhotoImage(aligned_frame)
                 self.image_label.configure(image=photo)
                 self.image_label.image = photo
+
                 self.status_var.set("Status: Aligned Depth Running")
 
         # Schedule next update
@@ -498,8 +597,9 @@ if __name__ == '__main__':
     
     try:
         logger.info("Starting application...")
-        
-        camera_subscriber = CameraSubscriber(ip=args.ip)
+
+        camera_calibration_params = CameraCalibrationParams("/app/camera_calibration.json")
+        camera_subscriber = CameraSubscriber(ip=args.ip, calibration_params=camera_calibration_params)
         tof_subscriber = TofSubscriber(ip=args.ip)
         aligned_depth_publisher = AlignedDepthPublisher(camera_subscriber, tof_subscriber)
 
