@@ -1,0 +1,204 @@
+2025-01-02 18:46:54,590 - __main__ - DEBUG - [setup_logging:596] - Logging configuration completed
+2025-01-02 18:46:54,590 - __main__ - DEBUG - [setup_logging:597] - Root logger level: DEBUG
+2025-01-02 18:46:54,590 - __main__ - INFO - [<module>:614] - Starting application...
+2025-01-02 18:46:54,591 - CameraCalibrationParams - INFO - [__load_calibration_data:54] - Loaded calibration data from /app/camera_calibration.json
+2025-01-02 18:46:54,591 - CameraCalibrationParams - INFO - [__load_calibration_data:55] - Camera matrix: [[136.13001898   0.         148.99286024]
+ [  0.         135.50583426 108.5085924 ]
+ [  0.           0.           1.        ]]
+2025-01-02 18:46:54,591 - CameraCalibrationParams - INFO - [__load_calibration_data:56] - Distortion coefficients: [[-1.35353036  2.47109723 -0.02140124 -0.0103521  -1.3581297 ]]
+2025-01-02 18:46:54,591 - CameraCalibrationParams - INFO - [__load_calibration_data:57] - Image size: (324, 324)
+2025-01-02 18:46:54,591 - CameraCalibrationParams - INFO - [__load_calibration_data:58] - Reprojection error: 0.840031399151446
+2025-01-02 18:46:54,592 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.39269908169872414
+2025-01-02 18:46:54,592 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.39269908169872414
+2025-01-02 18:46:54,592 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-382.6834323650898, -382.6834323650898, 853.5533905932737)
+2025-01-02 18:46:54,592 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.39269908169872414
+2025-01-02 18:46:54,592 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.28049934407051724
+2025-01-02 18:46:54,592 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-382.6834323650898, -276.83551142484936, 887.7718461806362)
+2025-01-02 18:46:54,592 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.39269908169872414
+2025-01-02 18:46:54,592 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.16829960644231035
+2025-01-02 18:46:54,592 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-382.6834323650898, -167.5062233047364, 910.8260557050538)
+2025-01-02 18:46:54,592 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.39269908169872414
+2025-01-02 18:46:54,592 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.05609986881410345
+2025-01-02 18:46:54,592 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-382.6834323650898, -56.070447237191786, 922.4260991053933)
+2025-01-02 18:46:54,592 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.39269908169872414
+2025-01-02 18:46:54,592 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.05609986881410345
+2025-01-02 18:46:54,592 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-382.6834323650898, 56.070447237191786, 922.4260991053933)
+2025-01-02 18:46:54,593 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.39269908169872414
+2025-01-02 18:46:54,593 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.16829960644231035
+2025-01-02 18:46:54,593 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-382.6834323650898, 167.5062233047364, 910.8260557050538)
+2025-01-02 18:46:54,593 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.39269908169872414
+2025-01-02 18:46:54,593 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.28049934407051724
+2025-01-02 18:46:54,593 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-382.6834323650898, 276.83551142484936, 887.7718461806362)
+2025-01-02 18:46:54,593 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.39269908169872414
+2025-01-02 18:46:54,593 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.39269908169872414
+2025-01-02 18:46:54,593 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-382.6834323650898, 382.6834323650898, 853.5533905932737)
+2025-01-02 18:46:54,593 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.28049934407051724
+2025-01-02 18:46:54,593 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.39269908169872414
+2025-01-02 18:46:54,593 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-276.83551142484936, -382.6834323650898, 887.7718461806362)
+2025-01-02 18:46:54,593 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.28049934407051724
+2025-01-02 18:46:54,593 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.28049934407051724
+2025-01-02 18:46:54,593 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-276.83551142484936, -276.83551142484936, 923.3620996141422)
+2025-01-02 18:46:54,593 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.28049934407051724
+2025-01-02 18:46:54,594 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.16829960644231035
+2025-01-02 18:46:54,594 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-276.83551142484936, -167.5062233047364, 947.3405388978309)
+2025-01-02 18:46:54,594 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.28049934407051724
+2025-01-02 18:46:54,594 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.05609986881410345
+2025-01-02 18:46:54,594 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-276.83551142484936, -56.070447237191786, 959.4056212450957)
+2025-01-02 18:46:54,594 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.28049934407051724
+2025-01-02 18:46:54,594 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.05609986881410345
+2025-01-02 18:46:54,594 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-276.83551142484936, 56.070447237191786, 959.4056212450957)
+2025-01-02 18:46:54,594 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.28049934407051724
+2025-01-02 18:46:54,594 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.16829960644231035
+2025-01-02 18:46:54,594 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-276.83551142484936, 167.5062233047364, 947.3405388978309)
+2025-01-02 18:46:54,594 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.28049934407051724
+2025-01-02 18:46:54,594 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.28049934407051724
+2025-01-02 18:46:54,594 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-276.83551142484936, 276.83551142484936, 923.3620996141422)
+2025-01-02 18:46:54,594 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.28049934407051724
+2025-01-02 18:46:54,595 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.39269908169872414
+2025-01-02 18:46:54,595 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-276.83551142484936, 382.6834323650898, 887.7718461806362)
+2025-01-02 18:46:54,595 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.16829960644231035
+2025-01-02 18:46:54,595 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.39269908169872414
+2025-01-02 18:46:54,595 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-167.5062233047364, -382.6834323650898, 910.8260557050539)
+2025-01-02 18:46:54,595 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.16829960644231035
+2025-01-02 18:46:54,595 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.28049934407051724
+2025-01-02 18:46:54,595 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-167.5062233047364, -276.83551142484936, 947.3405388978309)
+2025-01-02 18:46:54,595 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.16829960644231035
+2025-01-02 18:46:54,595 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.16829960644231035
+2025-01-02 18:46:54,595 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-167.5062233047364, -167.5062233047364, 971.9416651541839)
+2025-01-02 18:46:54,595 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.16829960644231035
+2025-01-02 18:46:54,596 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.05609986881410345
+2025-01-02 18:46:54,596 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-167.5062233047364, -56.070447237191786, 984.3200610375332)
+2025-01-02 18:46:54,596 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.16829960644231035
+2025-01-02 18:46:54,596 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.05609986881410345
+2025-01-02 18:46:54,596 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-167.5062233047364, 56.070447237191786, 984.3200610375332)
+2025-01-02 18:46:54,596 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.16829960644231035
+2025-01-02 18:46:54,596 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.16829960644231035
+2025-01-02 18:46:54,596 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-167.5062233047364, 167.5062233047364, 971.9416651541839)
+2025-01-02 18:46:54,596 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.16829960644231035
+2025-01-02 18:46:54,596 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.28049934407051724
+2025-01-02 18:46:54,596 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-167.5062233047364, 276.83551142484936, 947.3405388978309)
+2025-01-02 18:46:54,596 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.16829960644231035
+2025-01-02 18:46:54,596 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.39269908169872414
+2025-01-02 18:46:54,596 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-167.5062233047364, 382.6834323650898, 910.8260557050539)
+2025-01-02 18:46:54,597 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.05609986881410345
+2025-01-02 18:46:54,597 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.39269908169872414
+2025-01-02 18:46:54,597 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-56.070447237191786, -382.6834323650898, 922.4260991053933)
+2025-01-02 18:46:54,597 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.05609986881410345
+2025-01-02 18:46:54,597 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.28049934407051724
+2025-01-02 18:46:54,597 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-56.070447237191786, -276.83551142484936, 959.4056212450956)
+2025-01-02 18:46:54,597 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.05609986881410345
+2025-01-02 18:46:54,597 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.16829960644231035
+2025-01-02 18:46:54,597 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-56.070447237191786, -167.5062233047364, 984.3200610375332)
+2025-01-02 18:46:54,597 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.05609986881410345
+2025-01-02 18:46:54,597 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.05609986881410345
+2025-01-02 18:46:54,597 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-56.070447237191786, -56.070447237191786, 996.8561049466214)
+2025-01-02 18:46:54,597 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.05609986881410345
+2025-01-02 18:46:54,597 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.05609986881410345
+2025-01-02 18:46:54,597 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-56.070447237191786, 56.070447237191786, 996.8561049466214)
+2025-01-02 18:46:54,598 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.05609986881410345
+2025-01-02 18:46:54,598 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.16829960644231035
+2025-01-02 18:46:54,598 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-56.070447237191786, 167.5062233047364, 984.3200610375332)
+2025-01-02 18:46:54,598 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.05609986881410345
+2025-01-02 18:46:54,598 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.28049934407051724
+2025-01-02 18:46:54,598 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-56.070447237191786, 276.83551142484936, 959.4056212450956)
+2025-01-02 18:46:54,598 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: -0.05609986881410345
+2025-01-02 18:46:54,598 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.39269908169872414
+2025-01-02 18:46:54,598 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (-56.070447237191786, 382.6834323650898, 922.4260991053933)
+2025-01-02 18:46:54,598 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.05609986881410345
+2025-01-02 18:46:54,598 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.39269908169872414
+2025-01-02 18:46:54,599 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (56.070447237191786, -382.6834323650898, 922.4260991053933)
+2025-01-02 18:46:54,599 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.05609986881410345
+2025-01-02 18:46:54,599 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.28049934407051724
+2025-01-02 18:46:54,599 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (56.070447237191786, -276.83551142484936, 959.4056212450956)
+2025-01-02 18:46:54,599 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.05609986881410345
+2025-01-02 18:46:54,599 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.16829960644231035
+2025-01-02 18:46:54,599 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (56.070447237191786, -167.5062233047364, 984.3200610375332)
+2025-01-02 18:46:54,599 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.05609986881410345
+2025-01-02 18:46:54,599 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.05609986881410345
+2025-01-02 18:46:54,599 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (56.070447237191786, -56.070447237191786, 996.8561049466214)
+2025-01-02 18:46:54,599 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.05609986881410345
+2025-01-02 18:46:54,599 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.05609986881410345
+2025-01-02 18:46:54,599 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (56.070447237191786, 56.070447237191786, 996.8561049466214)
+2025-01-02 18:46:54,600 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.05609986881410345
+2025-01-02 18:46:54,600 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.16829960644231035
+2025-01-02 18:46:54,600 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (56.070447237191786, 167.5062233047364, 984.3200610375332)
+2025-01-02 18:46:54,600 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.05609986881410345
+2025-01-02 18:46:54,600 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.28049934407051724
+2025-01-02 18:46:54,600 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (56.070447237191786, 276.83551142484936, 959.4056212450956)
+2025-01-02 18:46:54,600 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.05609986881410345
+2025-01-02 18:46:54,600 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.39269908169872414
+2025-01-02 18:46:54,600 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (56.070447237191786, 382.6834323650898, 922.4260991053933)
+2025-01-02 18:46:54,600 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.16829960644231035
+2025-01-02 18:46:54,600 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.39269908169872414
+2025-01-02 18:46:54,600 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (167.5062233047364, -382.6834323650898, 910.8260557050539)
+2025-01-02 18:46:54,600 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.16829960644231035
+2025-01-02 18:46:54,600 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.28049934407051724
+2025-01-02 18:46:54,601 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (167.5062233047364, -276.83551142484936, 947.3405388978309)
+2025-01-02 18:46:54,601 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.16829960644231035
+2025-01-02 18:46:54,601 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.16829960644231035
+2025-01-02 18:46:54,601 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (167.5062233047364, -167.5062233047364, 971.9416651541839)
+2025-01-02 18:46:54,601 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.16829960644231035
+2025-01-02 18:46:54,601 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.05609986881410345
+2025-01-02 18:46:54,601 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (167.5062233047364, -56.070447237191786, 984.3200610375332)
+2025-01-02 18:46:54,601 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.16829960644231035
+2025-01-02 18:46:54,601 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.05609986881410345
+2025-01-02 18:46:54,601 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (167.5062233047364, 56.070447237191786, 984.3200610375332)
+2025-01-02 18:46:54,601 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.16829960644231035
+2025-01-02 18:46:54,601 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.16829960644231035
+2025-01-02 18:46:54,602 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (167.5062233047364, 167.5062233047364, 971.9416651541839)
+2025-01-02 18:46:54,602 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.16829960644231035
+2025-01-02 18:46:54,602 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.28049934407051724
+2025-01-02 18:46:54,602 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (167.5062233047364, 276.83551142484936, 947.3405388978309)
+2025-01-02 18:46:54,602 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.16829960644231035
+2025-01-02 18:46:54,602 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.39269908169872414
+2025-01-02 18:46:54,602 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (167.5062233047364, 382.6834323650898, 910.8260557050539)
+2025-01-02 18:46:54,602 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.28049934407051724
+2025-01-02 18:46:54,602 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.39269908169872414
+2025-01-02 18:46:54,602 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (276.83551142484936, -382.6834323650898, 887.7718461806362)
+2025-01-02 18:46:54,602 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.28049934407051724
+2025-01-02 18:46:54,602 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.28049934407051724
+2025-01-02 18:46:54,602 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (276.83551142484936, -276.83551142484936, 923.3620996141422)
+2025-01-02 18:46:54,603 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.28049934407051724
+2025-01-02 18:46:54,603 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.16829960644231035
+2025-01-02 18:46:54,603 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (276.83551142484936, -167.5062233047364, 947.3405388978309)
+2025-01-02 18:46:54,603 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.28049934407051724
+2025-01-02 18:46:54,603 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.05609986881410345
+2025-01-02 18:46:54,603 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (276.83551142484936, -56.070447237191786, 959.4056212450957)
+2025-01-02 18:46:54,603 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.28049934407051724
+2025-01-02 18:46:54,603 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.05609986881410345
+2025-01-02 18:46:54,603 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (276.83551142484936, 56.070447237191786, 959.4056212450957)
+2025-01-02 18:46:54,603 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.28049934407051724
+2025-01-02 18:46:54,603 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.16829960644231035
+2025-01-02 18:46:54,603 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (276.83551142484936, 167.5062233047364, 947.3405388978309)
+2025-01-02 18:46:54,604 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.28049934407051724
+2025-01-02 18:46:54,604 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.28049934407051724
+2025-01-02 18:46:54,604 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (276.83551142484936, 276.83551142484936, 923.3620996141422)
+2025-01-02 18:46:54,604 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.28049934407051724
+2025-01-02 18:46:54,604 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.39269908169872414
+2025-01-02 18:46:54,604 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (276.83551142484936, 382.6834323650898, 887.7718461806362)
+2025-01-02 18:46:54,604 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.39269908169872414
+2025-01-02 18:46:54,604 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.39269908169872414
+2025-01-02 18:46:54,604 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (382.6834323650898, -382.6834323650898, 853.5533905932737)
+2025-01-02 18:46:54,604 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.39269908169872414
+2025-01-02 18:46:54,604 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.28049934407051724
+2025-01-02 18:46:54,604 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (382.6834323650898, -276.83551142484936, 887.7718461806362)
+2025-01-02 18:46:54,604 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.39269908169872414
+2025-01-02 18:46:54,604 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.16829960644231035
+2025-01-02 18:46:54,605 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (382.6834323650898, -167.5062233047364, 910.8260557050538)
+2025-01-02 18:46:54,605 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.39269908169872414
+2025-01-02 18:46:54,605 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: -0.05609986881410345
+2025-01-02 18:46:54,605 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (382.6834323650898, -56.070447237191786, 922.4260991053933)
+2025-01-02 18:46:54,605 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.39269908169872414
+2025-01-02 18:46:54,605 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.05609986881410345
+2025-01-02 18:46:54,605 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (382.6834323650898, 56.070447237191786, 922.4260991053933)
+2025-01-02 18:46:54,605 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.39269908169872414
+2025-01-02 18:46:54,605 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.16829960644231035
+2025-01-02 18:46:54,605 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (382.6834323650898, 167.5062233047364, 910.8260557050538)
+2025-01-02 18:46:54,605 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.39269908169872414
+2025-01-02 18:46:54,605 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.28049934407051724
+2025-01-02 18:46:54,606 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (382.6834323650898, 276.83551142484936, 887.7718461806362)
+2025-01-02 18:46:54,606 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:306] - Theta_h: 0.39269908169872414
+2025-01-02 18:46:54,606 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:308] - Theta_v: 0.39269908169872414
+2025-01-02 18:46:54,606 - AlignedDepthPublisher - DEBUG - [__calculate_grid_positions:315] - Point at ref distance: (382.6834323650898, 382.6834323650898, 853.5533905932737)
+2025-01-02 18:46:54,606 - AlignedDepthPublisher - INFO - [__init__:268] - TOF pixel size: 13
+2025-01-02 18:46:54,669 - urllib3.connectionpool - DEBUG - [_new_conn:243] - Starting new HTTP connection (1): 10.10.10.1:80
