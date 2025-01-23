@@ -394,6 +394,7 @@ class AlignedDepthPublisher:
         """Generate C++ header file with TOF cell to RGB pixel mappings"""
         header_content = []
         header_content.append("// Auto-generated TOF cell to RGB pixel mapping")
+        header_content.append("// REV 0.0.1")
         header_content.append("#pragma once")
         header_content.append("#include <array>")
         header_content.append("#include <vector>")
@@ -406,20 +407,33 @@ class AlignedDepthPublisher:
         header_content.append("constexpr size_t kTofCellCount = 64;  // 8x8 grid")
         header_content.append("")
         
-        # Create the mapping structure
+        # Create the mapping structure with x,y coordinates
+        header_content.append("struct PixelCoord {")
+        header_content.append("    uint16_t x;")
+        header_content.append("    uint16_t y;")
+        header_content.append("};")
+        header_content.append("")
+        
         header_content.append("struct TofRgbMapping {")
-        header_content.append("    std::vector<uint32_t> pixel_indices;")
+        header_content.append("    std::vector<PixelCoord> pixels;")
         header_content.append("};")
         header_content.append("")
         
         # Create the lookup array
-        header_content.append("// Mapping from TOF cell ID to corresponding RGB pixel indices")
+        header_content.append("// Mapping from TOF cell ID to corresponding RGB pixel coordinates")
         header_content.append("inline const std::array<TofRgbMapping, kTofCellCount> kTofRgbMap = {{")
         
         # Add each cell's mapping using stored cell_regions
         for region in sorted(self.cell_regions, key=lambda x: x['cell_id']):
-            pixels_str = ", ".join(str(p) for p in region['pixels'])
-            header_content.append(f"    {{{{ {pixels_str} }}}},  // Cell {region['cell_id']}")
+            # Convert pixel indices to x,y coordinates
+            coords = []
+            for pixel_idx in region['pixels']:
+                y = pixel_idx // 324  # Image width
+                x = pixel_idx % 324
+                coords.append(f"{{{{ {x}, {y} }}}}")
+            
+            coords_str = ", ".join(coords)
+            header_content.append(f"    {{{{ {coords_str} }}}},  // Cell {region['cell_id']}")
         
         header_content.append("}};")
         header_content.append("")
