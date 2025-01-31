@@ -89,27 +89,38 @@ class CameraSubscriber:
             raise e
 
     def get_rgb_frame(self):
-        result = self.__get_frame_data()
+        max_retries = 3
+        retry_delay = 0.1
+        
+        for attempt in range(max_retries):
+            try:
+                result = self.__get_frame_data()
+                if not result or 'error' in result or 'result' not in result:
+                    if attempt < max_retries - 1:
+                        time.sleep(retry_delay)
+                        continue
+                    return None
 
-        if not result or 'error' in result or 'result' not in result:
-            return None
+                # Process frame data
+                result_data = result['result']
+                width = result_data['width']
+                height = result_data['height']
+                frame_base64 = result_data['base64_data']
 
-        try:
-            # Use data from the result to create a PIL Image
-            result_data = result['result']
-            width = result_data['width']
-            height = result_data['height']
-            frame_base64 = result_data['base64_data']
+                frame = base64.b64decode(frame_base64)
+                np_data = np.frombuffer(frame, dtype=np.uint8)
+                rgb_image = np_data.reshape((height, width, 3))
 
-            frame = base64.b64decode(frame_base64)
-            np_data = np.frombuffer(frame, dtype=np.uint8)
-            rgb_image = np_data.reshape((height, width, 3))
+                return Image.fromarray(rgb_image)
 
-            return Image.fromarray(rgb_image)
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
+                    continue
+                self.logger.error(f"Error processing camera frame: {e}")
+                return None
 
-        except Exception as e:
-            self.logger.error(f"Error processing camera frame: {e}")
-            return None
+        return None
 
     def __get_frame_data(self):
         try:
@@ -283,6 +294,8 @@ class AlignedDepthPublisher:
         width = 2 * self.ref_distance * np.tan(self.tof_fov_h / 2)
         height = 2 * self.ref_distance * np.tan(self.tof_fov_v / 2)
 
+        self.logger.debug(f"TOF width: {width}, height: {height}")
+
         # Define corners in TOF frame (bottom-left, bottom-right, top-left, top-right)
         corners = np.array([
             [-width/2, -height/2, self.ref_distance],  # bottom left
@@ -394,10 +407,9 @@ class AlignedDepthPublisher:
         """Generate C++ header file with TOF cell to RGB pixel mappings"""
         header_content = []
         header_content.append("// Auto-generated TOF cell to RGB pixel mapping")
-        header_content.append("// REV 0.0.1")
         header_content.append("#pragma once")
         header_content.append("#include <array>")
-        header_content.append("#include <vector>")
+        header_content.append("#include <cstdint>")
         header_content.append("")
         header_content.append("namespace coralmicro {")
         header_content.append("")
@@ -413,27 +425,34 @@ class AlignedDepthPublisher:
         header_content.append("    uint16_t y;")
         header_content.append("};")
         header_content.append("")
-        
-        header_content.append("struct TofRgbMapping {")
-        header_content.append("    std::vector<PixelCoord> pixels;")
+
+        # For each cell, create a constexpr array of its coordinates
+        for cell_idx in range(64):
+            region = next(r for r in self.cell_regions if r['cell_id'] == cell_idx)
+            coords = []
+            for pixel_idx in region['pixels']:
+                y = pixel_idx // 324  # Image width
+                x = pixel_idx % 324
+                coords.append(f"{{{x}, {y}}}")  # Remove extra braces
+            
+            coords_str = ", ".join(coords)
+            header_content.append(f"constexpr PixelCoord kTofCell{cell_idx}Pixels[] = {{ {coords_str} }};")
+            header_content.append(f"constexpr size_t kTofCell{cell_idx}PixelCount = {len(coords)};")
+            header_content.append("")
+
+        # Create the mapping structure that references the pixel arrays
+        header_content.append("struct TofCellMapping {")
+        header_content.append("    const PixelCoord* pixels;")
+        header_content.append("    const size_t count;")
         header_content.append("};")
         header_content.append("")
         
         # Create the lookup array
         header_content.append("// Mapping from TOF cell ID to corresponding RGB pixel coordinates")
-        header_content.append("inline const std::array<TofRgbMapping, kTofCellCount> kTofRgbMap = {{")
+        header_content.append("constexpr std::array<TofCellMapping, kTofCellCount> kTofRgbMap = {{")
         
-        # Add each cell's mapping using stored cell_regions
-        for region in sorted(self.cell_regions, key=lambda x: x['cell_id']):
-            # Convert pixel indices to x,y coordinates
-            coords = []
-            for pixel_idx in region['pixels']:
-                y = pixel_idx // 324  # Image width
-                x = pixel_idx % 324
-                coords.append(f"{{{{ {x}, {y} }}}}")
-            
-            coords_str = ", ".join(coords)
-            header_content.append(f"    {{{{ {coords_str} }}}},  // Cell {region['cell_id']}")
+        for cell_idx in range(64):
+            header_content.append(f"    {{ kTofCell{cell_idx}Pixels, kTofCell{cell_idx}PixelCount }},  // Cell {cell_idx}")
         
         header_content.append("}};")
         header_content.append("")

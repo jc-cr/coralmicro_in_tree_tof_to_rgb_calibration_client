@@ -21,11 +21,11 @@ services:
     command: bash -c "python3 /app/scripts/viz.py"
 
 
-  calibration:
-    user: "${UID:-1000}:${GID:-1000}"
-    build:
-      context: ..
-      dockerfile: .docker/Dockerfile
-    volumes:
-      - ..:/app
-    command: bash -c "python3 /app/scripts/get_intrinsics.py"
+ # calibration:
+ #   user: "${UID:-1000}:${GID:-1000}"
+ #   build:
+ #     context: ..
+ #     dockerfile: .docker/Dockerfile
+ #   volumes:
+ #     - ..:/app
+ #   command: bash -c "python3 /app/scripts/get_intrinsics.py"
