@@ -242,6 +242,15 @@ class TofSubscriber:
                                 text_color,
                                 1)
 
+                    # depth value to center of cell
+                    cv2.putText(img,
+                                f"{distance}",
+                                (x1 + 2, y1 + 24),
+                                cv2.FONT_HERSHEY_SIMPLEX,
+                                0.3,
+                                text_color,
+                                1)
+
 
             return Image.fromarray(img), temperature
 
@@ -934,11 +943,22 @@ class Visualizer:
         self.root.after(33, self.update_display)  # ~30 FPS
 
     def save_image(self):
-        img_filename = f"image_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+        current_time = datetime.now().strftime("%Y%m%d_%H%M%S") 
+
+        img_filename = f"image_{current_time}.png"
         img_path = os.path.join("saved_images", img_filename)
 
         if self.current_frame:
             self.current_frame.save(img_path)
+
+            # Save depth map if available as JSON for human readable
+            if self.current_topic == Topic.TOF.value or self.current_topic == Topic.ALIGNED_DEPTH_FRAME.value:
+                depth_filename = f"depth_{current_time}.json"
+                depth_path = os.path.join("saved_images", depth_filename)
+
+                with open(depth_path, 'w') as f:
+                    json.dump(self.tof_subscriber.get_tof_data(), f)
+
             self.status_var.set(f"Status: Image saved to {img_path}")
 
     def quit(self):
