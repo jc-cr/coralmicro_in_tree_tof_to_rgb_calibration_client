@@ -19,6 +19,7 @@ services:
     stdin_open: true  # Enable stdin
     tty: true        # Enable terminal
     command: bash -c "python3 /app/scripts/viz.py"
+    
 
 
  # calibration:

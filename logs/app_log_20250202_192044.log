@@ -1,0 +1,25 @@
+2025-02-02 19:20:44,640 - __main__ - DEBUG - [setup_logging:731] - Logging configuration completed
+2025-02-02 19:20:44,640 - __main__ - DEBUG - [setup_logging:732] - Root logger level: DEBUG
+2025-02-02 19:20:44,640 - __main__ - INFO - [<module>:751] - Starting application...
+2025-02-02 19:20:44,640 - CameraCalibrationParams - INFO - [__load_calibration_data:55] - Loaded calibration data from /app/camera_calibration.json
+2025-02-02 19:20:44,641 - CameraCalibrationParams - INFO - [__load_calibration_data:56] - Camera matrix: [[136.13001898   0.         148.99286024]
+ [  0.         135.50583426 108.5085924 ]
+ [  0.           0.           1.        ]]
+2025-02-02 19:20:44,641 - CameraCalibrationParams - INFO - [__load_calibration_data:57] - Distortion coefficients: [[-1.35353036  2.47109723 -0.02140124 -0.0103521  -1.3581297 ]]
+2025-02-02 19:20:44,641 - CameraCalibrationParams - INFO - [__load_calibration_data:58] - Image size: (324, 324)
+2025-02-02 19:20:44,641 - CameraCalibrationParams - INFO - [__load_calibration_data:59] - Reprojection error: 0.840031399151446
+2025-02-02 19:20:44,641 - AlignedDepthPublisher - DEBUG - [__calculate_tof_corners:297] - TOF width: 828.4271247461901, height: 828.4271247461901
+2025-02-02 19:20:44,642 - AlignedDepthPublisher - DEBUG - [__calculate_tof_corners:307] - TOF corners at 1m: [[-414.21356237 -414.21356237 1000.        ]
+ [ 414.21356237 -414.21356237 1000.        ]
+ [-414.21356237  414.21356237 1000.        ]
+ [ 414.21356237  414.21356237 1000.        ]]
+2025-02-02 19:20:44,642 - AlignedDepthPublisher - DEBUG - [__transform_to_camera_frame:315] - Camera frame points: [[-412.81356237 -398.74356237  986.85      ]
+ [ 415.61356237 -398.74356237  986.85      ]
+ [-412.81356237  429.68356237  986.85      ]
+ [ 415.61356237  429.68356237  986.85      ]]
+2025-02-02 19:20:44,642 - AlignedDepthPublisher - DEBUG - [__project_to_image_plane:334] - Image plane points: [[ 92  53]
+ [206  53]
+ [ 92 167]
+ [206 167]]
+2025-02-02 19:20:44,712 - urllib3.connectionpool - DEBUG - [_new_conn:243] - Starting new HTTP connection (1): 10.10.10.1:80
+2025-02-02 19:20:44,751 - urllib3.connectionpool - DEBUG - [_make_request:546] - http://10.10.10.1:80 "POST /jsonrpc HTTP/10" 200 419971
