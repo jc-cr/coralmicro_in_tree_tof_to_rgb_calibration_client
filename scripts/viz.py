@@ -24,6 +24,14 @@ class Topic(Enum):
     TOF = "tof"
     ALIGNED_DEPTH_FRAME = "aligned_depth_frame"
 
+class TofMode(Enum):
+        """
+         mode: 
+         #define VL53L8CX_RESOLUTION_4X4			((uint8_t) 16U 
+         #define VL53L8CX_RESOLUTION_8X8			((uint8_t) 64U)
+        """
+        FOUR_X_FOUR = 16
+        EIGHT_X_EIGHT = 64
 
 class CameraCalibrationParams:
     def __init__(self, calibration_json_path):
@@ -158,12 +166,18 @@ class TofSubscriber:
         # TOF parameters
         self.tof_fov_horizontal = np.radians(45)
         self.tof_fov_vertical = np.radians(45)
-        self.tof_grid_size = np.array([8, 8])
 
+        # DEBUG file write flag
+        self.tof_file_written_flag = False
+        
+        # Grid size will be determined dynamically
+        self._grid_size = None
+        self._mode = None  # Store current mode (4x4 or 8x8)
+        self.min_distance = 0
         self.max_distance = 4000  # 400cm in mm
 
     def get_tof_data(self):
-        """Gets raw TOF data"""
+        """Gets raw TOF data from sensor with correct data types"""
         try:
             response = requests.post(
                 f'http://{self.ip}/jsonrpc',
@@ -176,118 +190,200 @@ class TofSubscriber:
                 headers={'Content-Type': 'application/json'},
                 timeout=5.0
             )
-            return response.json()
+            
+            data = response.json()
+            result = data['result']
+            self._mode = result['mode']
 
-        except Exception as e:
-            self.logger.error(f"Error getting TOF grid: {e}")
-            return None
-
-
-    def get_tof_frame(self, size=(640, 480)):
-        """Creates a PIL Image visualization of TOF data with correct orientation"""
-        try:
-            result = self.get_tof_data()
-
-            if not result or 'error' in result or 'result' not in result:
+            if self._mode == TofMode.FOUR_X_FOUR.value:
+                self._grid_size = np.array([4, 4])
+                array_size = 16
+            elif self._mode == TofMode.EIGHT_X_EIGHT.value:
+                self._grid_size = np.array([8, 8])
+                array_size = 64
+            else:
+                self.logger.error(f"Invalid mode: {self._mode}")
                 return None
 
-            result_data = result['result']
-            distances = result_data['distances']
-            temperature = result_data['temperature']
+            base64_str = result['results']
+            raw_data = base64.b64decode(base64_str)
 
-            # Create a blank image with proper size
-            img = np.zeros((size[1], size[0], 3), dtype=np.uint8)
+            # Read each field with its correct data type
+            silicon_temp = np.frombuffer(raw_data, dtype=np.int8, offset=0, count=1)[0]  # int8_t
+            ambient_per_spad = np.frombuffer(raw_data, dtype=np.uint32, offset=4, count=64)  # uint32_t[]
+            nb_target_detected = np.frombuffer(raw_data, dtype=np.uint8, offset=260, count=64)  # uint8_t[]
+            nb_spads_enabled = np.frombuffer(raw_data, dtype=np.uint32, offset=324, count=64)  # uint32_t[]
+            signal_per_spad = np.frombuffer(raw_data, dtype=np.uint32, offset=580, count=64)  # uint32_t[]
+            range_sigma_mm = np.frombuffer(raw_data, dtype=np.uint16, offset=836, count=64)  # uint16_t[]
+            distances = np.frombuffer(raw_data, dtype=np.int16, offset=964, count=array_size)  # int16_t[]
 
-            # Calculate cell sizes
-            cell_width = size[0] // self.tof_grid_size[0]
-            cell_height = size[1] // self.tof_grid_size[1]
+            # For debugging, print the first few values of each field
+            self.logger.debug(f"Temperature: {silicon_temp}°C")
+            self.logger.debug(f"First 4 distances: {distances[:4]}")
+            
+            # Filter invalid measurements
+            distances = np.where((distances < 0) | (distances > self.max_distance), 0, distances)
 
-            # Reshape distances into 8x8 grid
-            distances_array = np.array(distances).reshape(self.tof_grid_size)
+            return {
+                'mode': self._mode,
+                'distances': distances
+            }
 
-            for row in range(self.tof_grid_size[1]):
-                for col in range(self.tof_grid_size[0]):
-                    # Calculate cell position in display
-                    x1 = col * cell_width
-                    y1 = row * cell_height
-                    x2 = x1 + cell_width
-                    y2 = y1 + cell_height
+        except Exception as e: 
+            self.logger.error(f"Error getting TOF data: {e}")
+            return None
 
-                    # Get distance value with correct cell mapping
-                    # For display: top-left (0,0) should show cell_id 7
-                    #             top-right (7,0) should show cell_id 0
-                    #             bottom-left (0,7) should show cell_id 63
-                    #             bottom-right (7,7) should show cell_id 56
-                    cell_id = row * self.tof_grid_size[0] + (self.tof_grid_size[0] - 1 - col)
-                    distance = distances_array[row, col]
+            
+    def get_tof_frame(self, size=(640, 480)):
+        """Creates a PIL Image visualization of TOF data"""
+        try:
+            result = self.get_tof_data()
+            if result is None:
+                return None
 
-                    # Calculate color
-                    color = self.get_depth_color(distance)
+            # Process frame data
+            distances = result['distances']
 
-                    # Draw cell rectangle
-                    cv2.rectangle(img, (x1, y1), (x2, y2), color, -1)
-                    
-                    
-                    # Add cell ID with black or white text based on color brightness
-                    # Calculate perceived brightness (ITU-R BT.709)
-                    brightness = (0.2126 * color[2] + 0.7152 * color[1] + 0.0722 * color[0]) / 255
-                    text_color = (0, 0, 0) if brightness > 0.5 else (255, 255, 255)
-                    
-                    # Add depth value and cell ID
-                    cv2.putText(img,
-                                f"#{cell_id}",
-                                (x1 + 2, y1 + 12),
-                                cv2.FONT_HERSHEY_SIMPLEX,
-                                0.3,
-                                text_color,
-                                1)
+            # DEBUG output distance values 
+            if not self.tof_file_written_flag:
+                with open("distance_data.txt", "w") as f:
 
-                    # depth value to center of cell
-                    cv2.putText(img,
-                                f"{distance}",
-                                (x1 + 2, y1 + 24),
-                                cv2.FONT_HERSHEY_SIMPLEX,
-                                0.3,
-                                text_color,
-                                1)
+                    f.write(np.array2string(distances))
 
+                self.tof_file_written_flag = 1
 
-            return Image.fromarray(img), temperature
+            # Create visualization
+            return self.__create_visualization(distances, size)
 
         except Exception as e:
             self.logger.error(f"Error creating TOF visualization: {e}", exc_info=True)
-            raise e
+            return None
 
 
-
-    def get_depth_color(self, depth, max_depth=4000):
-        """Convert depth to RGB color using a multi-color gradient
+    def get_depth_color(self, depth):
+        """Convert depth to RGB color using a multi-color gradient with improved validation
         
         Args:
             depth: Depth value in mm
             max_depth: Maximum depth value in mm (default 4000)
         
         Returns:
-            Tuple of (B, G, R) values for OpenCV
+            Tuple of (B, G, R) values for OpenCV or None if invalid
         """
-        # Normalize depth to 0-1
-        norm_depth = min(max(depth / max_depth, 0), 1)
+        # More strict validation of depth values
+        if depth < self.min_distance or depth > self.max_distance:
+            norm_depth = 0
+
+        else:
+            # Normalize valid depth to 0-1
+            norm_depth = depth / self.max_distance
         
-        # Create a rainbow gradient using 6 points
-        # Red (close) -> Yellow -> Green -> Cyan -> Blue (far)
-        if norm_depth < 0.25:  # Red to Yellow
+        # Create a rainbow gradient
+        if norm_depth < 0.25:  # Red (close) -> Yellow
             ratio = norm_depth * 4
             return (0, int(255 * ratio), 255)
-        elif norm_depth < 0.5:  # Yellow to Green
+        elif norm_depth < 0.5:  # Yellow -> Green
             ratio = (norm_depth - 0.25) * 4
             return (0, 255, int(255 * (1 - ratio)))
-        elif norm_depth < 0.75:  # Green to Cyan
+        elif norm_depth < 0.75:  # Green -> Cyan
             ratio = (norm_depth - 0.5) * 4
             return (int(255 * ratio), 255, 0)
-        else:  # Cyan to Blue
+        else:  # Cyan -> Blue
             ratio = (norm_depth - 0.75) * 4
             return (255, int(255 * (1 - ratio)), 0)
 
+
+    def __create_visualization(self, distances, size):
+        """Create TOF visualization with improved validation and error handling"""
+        try:
+            # Create a blank image
+            img = np.zeros((size[1], size[0], 3), dtype=np.uint8)
+
+            if self._grid_size is None:
+                self.logger.error("Grid size not set. Cannot create visualization.")
+                return None
+
+            # Calculate cell sizes
+            display_aspect = size[0] / size[1]
+            grid_aspect = self._grid_size[0] / self._grid_size[1]
+            
+            if display_aspect > grid_aspect:
+                cell_height = size[1] // self._grid_size[1]
+                cell_width = cell_height
+                x_offset = (size[0] - (cell_width * self._grid_size[0])) // 2
+                y_offset = 0
+            else:
+                cell_width = size[0] // self._grid_size[0]
+                cell_height = cell_width
+                x_offset = 0
+                y_offset = (size[1] - (cell_height * self._grid_size[1])) // 2
+
+            # Reshape distances with validation
+            try:
+                distances_array = np.array(distances).reshape(self._grid_size)
+            except ValueError as e:
+                self.logger.error(f"Error reshaping distances array: {e}")
+                return None
+
+            # Adjust font size based on mode
+            base_font_scale = 0.3 if self._mode == TofMode.EIGHT_X_EIGHT.value else 0.5
+            font_scale = base_font_scale * (cell_width / 100)
+
+            # Draw grid cells with improved validation
+            for row in range(self._grid_size[1]):
+                for col in range(self._grid_size[0]):
+                    x1 = x_offset + col * cell_width
+                    y1 = y_offset + row * cell_height
+                    x2 = x1 + cell_width
+                    y2 = y1 + cell_height
+
+                    cell_id = row * self._grid_size[0] + (self._grid_size[0] - 1 - col)
+                    distance = distances_array[row, col]
+
+                    # Draw cell outline regardless of validity
+                    cv2.rectangle(img, (x1, y1), (x2, y2), (50, 50, 50), 1)
+
+                    # Get color for valid distances
+                    color = self.get_depth_color(distance)
+                    if color is not None:
+                        # Valid distance - draw filled cell
+                        cv2.rectangle(img, (x1, y1), (x2, y2), color, -1)
+                        
+                        # Calculate text color based on background brightness
+                        brightness = (0.2126 * color[2] + 0.7152 * color[1] + 0.0722 * color[0]) / 255
+                        text_color = (0, 0, 0) if brightness > 0.5 else (255, 255, 255)
+                        
+                        # Add cell ID and valid distance
+                        text_y_offset = int(cell_height * 0.2)
+                        cv2.putText(img,
+                                f"#{cell_id}",
+                                (x1 + 2, y1 + text_y_offset),
+                                cv2.FONT_HERSHEY_SIMPLEX,
+                                font_scale,
+                                text_color,
+                                1)
+                        cv2.putText(img,
+                                f"{distance}mm",
+                                (x1 + 2, y1 + text_y_offset * 2),
+                                cv2.FONT_HERSHEY_SIMPLEX,
+                                font_scale,
+                                text_color,
+                                1)
+                    else:
+                        # Invalid distance - just show cell ID in grey
+                        cv2.putText(img,
+                                f"#{cell_id}",
+                                (x1 + 2, y1 + int(cell_height * 0.2)),
+                                cv2.FONT_HERSHEY_SIMPLEX,
+                                font_scale,
+                                (128, 128, 128),
+                                1)
+
+            return Image.fromarray(img)
+
+        except Exception as e:
+            self.logger.error(f"Error in create_visualization: {e}", exc_info=True)
+            return None
 
 class AlignedDepthPublisher:
     """Handles alignment and processing of camera and TOF data"""
@@ -300,19 +396,20 @@ class AlignedDepthPublisher:
             self.tof_subscriber = tof_subscriber
 
             # Physical setup
-            # x, y, z offset of TOF sensor relative to camera
-            # With board on ground, user looking at board from usbc side
-            # x to the left
-            # y to the top
-            # z is up
             self.sensor_offset = np.array([-1.4, 15.47, -13.15])
-            self.ref_distance = 1000  # 1m in mm this comes from TOF sensor datasheet
+            self.ref_distance = 1000  # 1m in mm
 
             self.camera_matrix = camera_subscriber.calibration_params.camera_matrix
+            
+            # Wait for first TOF data to determine grid size
+            initial_data = self.tof_subscriber.get_tof_data()
+            if not initial_data:
+                raise Exception("Error getting initial TOF data")
+
             # TOF parameters
-            self.tof_grid_size = tof_subscriber.tof_grid_size
             self.tof_fov_h = tof_subscriber.tof_fov_horizontal
             self.tof_fov_v = tof_subscriber.tof_fov_vertical
+            self.tof_grid_size = tof_subscriber._grid_size
 
             # Calculate and store all the fixed positions
             self.tof_corners = self.__calculate_tof_corners()
@@ -326,10 +423,6 @@ class AlignedDepthPublisher:
             
             # Generate header file if needed
             self.__generate_tof_rgb_mapping()
-
-            # Generate calibration pattern
-            self.__generate_calibration_pattern()
-
 
         except Exception as e:
             self.logger.error(f"Error initializing aligned depth publisher: {e}")
@@ -430,41 +523,55 @@ class AlignedDepthPublisher:
         return grid_positions
 
     def __calculate_cell_size(self):
-        """Calculate cell size for visualization based on projected corner distances"""
+        """Calculate cell size that ensures complete coverage"""
         corners = self.image_plane_corners
-        # Calculate average width and height of cells based on corners
-        width = np.linalg.norm(corners[1] - corners[0]) / self.tof_grid_size[0]
-        height = np.linalg.norm(corners[2] - corners[0]) / self.tof_grid_size[1]
-        return int((width + height) / 2)  # Average of width and height
-    
+        # Calculate max width and height of cells to ensure coverage
+        width = np.linalg.norm(corners[1] - corners[0]) / (self.tof_grid_size[0] - 1)  # Use n-1 for full coverage
+        height = np.linalg.norm(corners[2] - corners[0]) / (self.tof_grid_size[1] - 1)
+        # Use the larger size to ensure overlap rather than gaps
+        return int(max(width, height))
+
     def __calculate_cell_pixels(self):
-        """Calculate pixel regions for each TOF cell"""
+        """Calculate overlapping pixel regions for each TOF cell"""
         cell_regions = []
         
         for cell in self.grid_positions_2d:
             u, v = cell['pos']
             cell_id = cell['cell_id']
             i, j = cell['grid_pos']
-            tof_row, tof_col = cell['tof_pos']  # Get TOF position
+            tof_row, tof_col = cell['tof_pos']
             
-            # Calculate pixel region for this cell
-            half_size = self.cell_size // 2
-            x_min = max(0, u - half_size)
-            y_min = max(0, v - half_size)
-            x_max = min(323, u + half_size)  # 324x324 image
-            y_max = min(323, v + half_size)
+            # Calculate cell bounds with slight overlap
+            cell_size = self.cell_size
+            x_min = max(0, u - cell_size//2)
+            y_min = max(0, v - cell_size//2)
+            x_max = min(323, u + cell_size//2)
+            y_max = min(323, v + cell_size//2)
+            
+            # Ensure minimum cell size
+            if x_max - x_min < cell_size:
+                if x_min == 0:
+                    x_max = min(323, x_min + cell_size)
+                else:
+                    x_min = max(0, x_max - cell_size)
+            
+            if y_max - y_min < cell_size:
+                if y_min == 0:
+                    y_max = min(323, y_min + cell_size)
+                else:
+                    y_min = max(0, y_max - cell_size)
             
             # Store both pixel indices and region bounds
             pixels = []
             for y in range(y_min, y_max + 1):
                 for x in range(x_min, x_max + 1):
-                    pixel_idx = y * 324 + x  # Convert 2D to 1D index
+                    pixel_idx = y * 324 + x
                     pixels.append(pixel_idx)
             
             cell_regions.append({
                 'cell_id': cell_id,
                 'grid_pos': (i, j),
-                'tof_pos': (tof_row, tof_col),  # Include TOF position
+                'tof_pos': (tof_row, tof_col),
                 'pixels': pixels,
                 'bounds': (x_min, y_min, x_max, y_max),
                 'center': (u, v)
@@ -483,9 +590,13 @@ class AlignedDepthPublisher:
         header_content.append("namespace coralmicro {")
         header_content.append("")
         
+        # Get total number of cells based on grid size
+        total_cells = self.tof_grid_size[0] * self.tof_grid_size[1]
+        mode_str = "4x4" if total_cells == 16 else "8x8"
+        
         # Add constants
         header_content.append("// Number of TOF cells")
-        header_content.append("constexpr size_t kTofCellCount = 64;  // 8x8 grid")
+        header_content.append(f"constexpr size_t kTofCellCount = {total_cells};  // {mode_str} grid")
         header_content.append("")
         
         # Create the mapping structure with x,y coordinates
@@ -496,7 +607,7 @@ class AlignedDepthPublisher:
         header_content.append("")
 
         # For each cell, create a constexpr array of its coordinates
-        for cell_idx in range(64):
+        for cell_idx in range(total_cells):
             region = next(r for r in self.cell_regions if r['cell_id'] == cell_idx)
             coords = []
             for pixel_idx in region['pixels']:
@@ -518,9 +629,9 @@ class AlignedDepthPublisher:
         
         # Create the lookup array
         header_content.append("// Mapping from TOF cell ID to corresponding RGB pixel coordinates")
-        header_content.append("constexpr std::array<TofCellMapping, kTofCellCount> kTofRgbMap = {{")
+        header_content.append(f"constexpr std::array<TofCellMapping, kTofCellCount> kTofRgbMap = {{")
         
-        for cell_idx in range(64):
+        for cell_idx in range(total_cells):
             header_content.append(f"    {{ kTofCell{cell_idx}Pixels, kTofCell{cell_idx}PixelCount }},  // Cell {cell_idx}")
         
         header_content.append("}};")
@@ -531,7 +642,7 @@ class AlignedDepthPublisher:
         with open("tof_rgb_mapping.hh", "w") as f:
             f.write("\n".join(header_content))
         
-        return len(self.cell_regions)
+        return total_cells
     
     def __back_project_to_camera_frame(self, image_points, z_distance=1000):
         """Back-project image points to camera frame at specified Z distance
@@ -562,203 +673,34 @@ class AlignedDepthPublisher:
         
         return np.array(camera_points)
 
-    def __get_pattern_3d_positions(self, z_distance=1000):
-        """Get all relevant 3D positions for calibration pattern
-        
-        Args:
-            z_distance: Distance from camera in mm (default 1m = 1000mm)
-            
-        Returns:
-            Dict containing:
-                corners: Camera frame coordinates of FOV corners 
-                grid_centers: Camera frame coordinates of all cell centers
-                grid_lines: Camera frame coordinates for grid lines
-        """
-        # Back project FOV corners
-        corners_3d = self.__back_project_to_camera_frame(self.image_plane_corners, z_distance)
-        
-        # Back project cell centers
-        centers_3d = []
-        for cell in self.grid_positions_2d:
-            pos_2d = np.array(cell['pos'])
-            pos_3d = self.__back_project_to_camera_frame([pos_2d], z_distance)[0]
-            centers_3d.append({
-                'cell_id': cell['cell_id'],
-                'grid_pos': cell['grid_pos'],
-                'pos_3d': pos_3d
-            })
-        
-        # Calculate grid lines
-        grid_lines = []
-        # Vertical lines
-        for i in range(self.tof_grid_size[0] + 1):
-            x_ratio = i / self.tof_grid_size[0]
-            cell_points = []
-            for j in range(self.tof_grid_size[1] + 1):
-                y_ratio = j / self.tof_grid_size[1]
-                u = int(self.image_plane_corners[0][0] + 
-                    x_ratio * (self.image_plane_corners[1][0] - self.image_plane_corners[0][0]))
-                v = int(self.image_plane_corners[0][1] + 
-                    y_ratio * (self.image_plane_corners[2][1] - self.image_plane_corners[0][1]))
-                point_3d = self.__back_project_to_camera_frame([[u, v]], z_distance)[0]
-                cell_points.append(point_3d)
-            grid_lines.append(('vertical', cell_points))
-        
-        # Horizontal lines
-        for j in range(self.tof_grid_size[1] + 1):
-            y_ratio = j / self.tof_grid_size[1]
-            cell_points = []
-            for i in range(self.tof_grid_size[0] + 1):
-                x_ratio = i / self.tof_grid_size[0]
-                u = int(self.image_plane_corners[0][0] + 
-                    x_ratio * (self.image_plane_corners[1][0] - self.image_plane_corners[0][0]))
-                v = int(self.image_plane_corners[0][1] + 
-                    y_ratio * (self.image_plane_corners[2][1] - self.image_plane_corners[0][1]))
-                point_3d = self.__back_project_to_camera_frame([[u, v]], z_distance)[0]
-                cell_points.append(point_3d)
-            grid_lines.append(('horizontal', cell_points))
-        
-        return {
-            'corners': corners_3d,
-            'grid_centers': centers_3d,
-            'grid_lines': grid_lines
-        }
-
-    def __generate_calibration_pattern(self, output_file="calibration_pattern.svg", z_distance=1000):
-        """Generate SVG calibration pattern with correct TOF orientation
-        
-        Args:
-            output_file: Path to output SVG file
-            z_distance: Distance from camera in mm (default 1m = 1000mm)
-        """
-        # Get all 3D positions
-        positions = self.__get_pattern_3d_positions(z_distance)
-        corners = positions['corners']
-        grid_centers = positions['grid_centers']
-        grid_lines = positions['grid_lines']
-        
-        # Calculate canvas size and margin
-        margin = 50  # mm
-        all_points = np.vstack([corners] + [center['pos_3d'] for center in grid_centers])
-        min_x, max_x = all_points[:, 0].min(), all_points[:, 0].max()
-        min_y, max_y = all_points[:, 1].min(), all_points[:, 1].max()
-        
-        width = (max_x - min_x) + 2*margin
-        height = (max_y - min_y) + 2*margin
-        
-        # Create SVG content with additional orientation markers
-        svg_content = [
-            f'<?xml version="1.0" encoding="UTF-8"?>',
-            f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{min_x-margin} {min_y-margin} {width} {height}">',
-            '<defs>',
-            '  <style>',
-            '    .cell-text { font: bold 20px sans-serif; text-anchor: middle; dominant-baseline: middle; }',
-            '    .grid-line { stroke: #666; stroke-width: 1; stroke-dasharray: 5,5; }',
-            '    .cube-box { stroke: #000; stroke-width: 2; fill: none; }',
-            '    .info-text { font: 16px sans-serif; }',
-            '    .orientation-text { font: bold 24px sans-serif; fill: blue; }',
-            '  </style>',
-            '</defs>'
-        ]
-        
-        # Draw boundary and grid lines (same as before)
-        boundary = f'M {corners[0][0]},{corners[0][1]}'
-        for corner in corners[1:]:
-            boundary += f' L {corner[0]},{corner[1]}'
-        boundary += ' Z'
-        svg_content.append(
-            f'<path d="{boundary}" fill="none" stroke="#000" stroke-width="2" stroke-dasharray="10,5"/>'
-        )
-        
-        # Draw grid lines
-        for line_type, points in grid_lines:
-            for i in range(len(points)-1):
-                p1, p2 = points[i], points[i+1]
-                svg_content.append(
-                    f'<line class="grid-line" x1="{p1[0]}" y1="{p1[1]}" '
-                    f'x2="{p2[0]}" y2="{p2[1]}"/>'
-                )
-        
-        # Add cell numbers and draw calibration cubes
-        cube_size = 127  # 5 inches in mm
-        # Update cube positions to match TOF orientation
-        cube_cells = [0, 9, 18, 27, 36]  # Diagonal pattern from top-right
-        
-        for center in grid_centers:
-            pos = center['pos_3d']
-            cell_id = center['cell_id']
-            
-            # Add cell number
-            svg_content.append(
-                f'<text class="cell-text" x="{pos[0]}" y="{pos[1]}">{cell_id}</text>'
-            )
-            
-            # Draw calibration cube if this is a cube position
-            if cell_id in cube_cells:
-                svg_content.append(
-                    f'<rect class="cube-box" x="{pos[0]-cube_size/2}" '
-                    f'y="{pos[1]-cube_size/2}" width="{cube_size}" height="{cube_size}"/>'
-                )
-        
-        # Add corner markers
-        for corner in corners:
-            svg_content.append(
-                f'<circle cx="{corner[0]}" cy="{corner[1]}" r="5" fill="#000"/>'
-            )
-        
-        # Add center crosshair
-        svg_content.append(
-            '<g stroke="#000" stroke-width="2">'
-            '<line x1="-10" y1="0" x2="10" y2="0"/>'
-            '<line x1="0" y1="-10" x2="0" y2="10"/>'
-            '</g>'
-        )
-        
-        # Add orientation markers
-        svg_content.extend([
-            f'<text class="orientation-text" x="{max_x-100}" y="{min_y+30}">Cell 0</text>',
-            f'<text class="orientation-text" x="{min_x+50}" y="{min_y+30}">Cell 7</text>',
-            f'<text class="orientation-text" x="{max_x-100}" y="{max_y-20}">Cell 56</text>',
-            f'<text class="orientation-text" x="{min_x+50}" y="{max_y-20}">Cell 63</text>'
-        ])
-        
-        # Add measurements text
-        svg_content.append(
-            f'<text x="{min_x}" y="{max_y + 30}" class="info-text">'
-            f'Scale: {z_distance}mm from camera</text>'
-        )
-        svg_content.append(
-            f'<text x="{min_x}" y="{max_y + 60}" class="info-text">'
-            'Cube size: 127mm (5")</text>'
-        )
-        
-        # Close SVG
-        svg_content.append('</svg>')
-        
-        # Write to file
-        with open(output_file, 'w') as f:
-            f.write('\n'.join(svg_content))
-        
-        self.logger.info(f"Generated calibration pattern: {output_file}")
-        return output_file
-
     def __get_sensor_data(self):
+        """Get synchronized sensor data from both TOF and RGB camera"""
         tof_data = self.tof_subscriber.get_tof_data()
         rgb_frame = self.camera_subscriber.get_rgb_frame()
 
         if not rgb_frame or not tof_data:
             return None
 
-        result_data = tof_data['result']
-        distances = result_data['distances']
-
-        return rgb_frame, distances
+        return rgb_frame, tof_data['distances']
 
     def __create_visualization(self, frame, distances):
         """Create aligned depth visualization with improved color mapping"""
         try:
             overlay = frame.copy()
-            distances_array = np.array(distances).reshape(self.tof_grid_size)
+            grid_size = self.tof_grid_size
+            
+            # Validate grid size matches distances array
+            expected_size = grid_size[0] * grid_size[1]
+            if len(distances) != expected_size:
+                self.logger.error(f"Distance array size mismatch. Expected {expected_size}, got {len(distances)}")
+                return None
+
+            # Reshape distances array based on grid size
+            distances_array = np.array(distances).reshape(grid_size)
+            
+            # Adjust visualization parameters based on grid size
+            font_scale = 0.3 if grid_size[0] == 8 else 0.5
+            opacity = 0.5  # Blend factor for overlay
             
             # Use pre-calculated cell regions for visualization
             for region in self.cell_regions:
@@ -768,33 +710,40 @@ class AlignedDepthPublisher:
                 u, v = region['center']
                 cell_id = region['cell_id']
                 
+                # Ensure point is within frame bounds
                 if (0 <= u < frame.shape[1] and 0 <= v < frame.shape[0]):
-                    # Get depth from the correct position in distances array
                     depth = distances_array[tof_row, tof_col]
                     
-                    # Only draw if depth is valid
-                    if 0 <= depth <= 4000:
+                    # Only visualize valid depth measurements
+                    if 0 < depth <= self.tof_subscriber.max_distance:
+                        # Get color based on depth
                         color = self.tof_subscriber.get_depth_color(depth)
                         
-                        # Draw cell rectangle using stored bounds
+                        # Draw cell overlay
                         cv2.rectangle(overlay, (x_min, y_min), (x_max, y_max), color, -1)
                         
-                        # Add cell ID with black or white text based on color brightness
-                        # Calculate perceived brightness (ITU-R BT.709)
+                        # Calculate text color based on background brightness
                         brightness = (0.2126 * color[2] + 0.7152 * color[1] + 0.0722 * color[0]) / 255
                         text_color = (0, 0, 0) if brightness > 0.5 else (255, 255, 255)
                         
-                        # Add depth value and cell ID
+                        # Add cell ID and depth with mode-appropriate font size
                         cv2.putText(overlay,
-                                    f"#{cell_id}",
-                                    (x_min + 2, y_min + 12),
-                                    cv2.FONT_HERSHEY_SIMPLEX,
-                                    0.3,
-                                    text_color,
-                                    1)
-                        
+                                f"#{cell_id}",
+                                (x_min + 2, y_min + 12),
+                                cv2.FONT_HERSHEY_SIMPLEX,
+                                font_scale,
+                                text_color,
+                                1)
+                        cv2.putText(overlay,
+                                f"{depth}mm",
+                                (x_min + 2, y_min + 24),
+                                cv2.FONT_HERSHEY_SIMPLEX,
+                                font_scale,
+                                text_color,
+                                1)
             
-            result = cv2.addWeighted(overlay, 0.5, frame, 0.5, 0)
+            # Blend overlay with original frame
+            result = cv2.addWeighted(overlay, opacity, frame, 1 - opacity, 0)
             return Image.fromarray(result)
             
         except Exception as e:
@@ -914,13 +863,11 @@ class Visualizer:
             result = self.tof_subscriber.get_tof_frame(size=(self.camera_subscriber.camera_width, self.camera_subscriber.camera_height))
 
             if result:
-                tof_image, temperature = result
+                tof_image = result
                 photo = ImageTk.PhotoImage(tof_image)
                 self.image_label.configure(image=photo)
                 self.image_label.image = photo
                 self.current_frame = tof_image
-                self.status_var.set(
-                    f"Status: TOF Running (Temp: {temperature}°C)")
 
         elif self.current_topic == Topic.ALIGNED_DEPTH_FRAME.value:
             aligned_frame = self.aligned_publisher.get_aligned_frame()
