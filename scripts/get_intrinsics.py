@@ -109,10 +109,10 @@ def save_calibration(mtx, dist, image_size, error, filename='camera_calibration.
 
 # Use the functions
 if __name__ == "__main__":
-    image_dir = "images_for_calibration"
+    image_dir = "images_for_calibration/300_300"
     
     # Adjust these to match your checkerboard pattern
-    checkerboard_size = (9, 6)  # internal corners, not squares
+    checkerboard_size = (10, 7)  # internal corners, not squares
     
     mtx, dist, image_size, error = calibrate_camera(image_dir,
                                                     checkerboard_size)
