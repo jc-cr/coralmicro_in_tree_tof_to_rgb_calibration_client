@@ -244,14 +244,6 @@ class TofSubscriber:
             # Process frame data
             distances = result['distances']
 
-            # DEBUG output distance values 
-            if not self.tof_file_written_flag:
-                with open("distance_data.txt", "w") as f:
-
-                    f.write(np.array2string(distances))
-
-                self.tof_file_written_flag = 1
-
             # Create visualization
             return self.__create_visualization(distances, size)
 
