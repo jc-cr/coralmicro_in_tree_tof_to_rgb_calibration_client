@@ -396,7 +396,8 @@ class AlignedDepthPublisher:
             self.tof_subscriber = tof_subscriber
 
             # Physical setup
-            self.sensor_offset = np.array([-1.4, 15.47, -13.15])
+            # See thesis for coordinate ref frame
+            self.sensor_offset = np.array([-0.85, 27.33, -12.32])
             self.ref_distance = 1000  # 1m in mm
 
             self.camera_matrix = camera_subscriber.calibration_params.camera_matrix
@@ -580,7 +581,7 @@ class AlignedDepthPublisher:
         return cell_regions
 
     def __generate_tof_rgb_mapping(self):
-        """Generate C++ header file with TOF cell to RGB pixel mappings"""
+        """Generate optimized C++ header file with TOF cell to RGB pixel mappings using bounding boxes"""
         header_content = []
         header_content.append("// Auto-generated TOF cell to RGB pixel mapping")
         header_content.append("#pragma once")
@@ -599,43 +600,35 @@ class AlignedDepthPublisher:
         header_content.append(f"constexpr size_t kTofCellCount = {total_cells};  // {mode_str} grid")
         header_content.append("")
         
-        # Create the mapping structure with x,y coordinates
-        header_content.append("struct PixelCoord {")
-        header_content.append("    uint16_t x;")
-        header_content.append("    uint16_t y;")
+        # Define compact cell region structure
+        header_content.append("struct TofCellRegion {")
+        header_content.append("    uint16_t x_min;")
+        header_content.append("    uint16_t y_min;")
+        header_content.append("    uint16_t x_max;")
+        header_content.append("    uint16_t y_max;")
+        header_content.append("    uint16_t center_x;")
+        header_content.append("    uint16_t center_y;")
+        header_content.append("    uint32_t area;      // Pre-calculated area of the cell region")
         header_content.append("};")
         header_content.append("")
-
-        # For each cell, create a constexpr array of its coordinates
+        
+        # Create array of cell regions
+        header_content.append("// Mapping of TOF cell regions (bounds, center, and area)")
+        header_content.append(f"constexpr std::array<TofCellRegion, kTofCellCount> kTofCellRegions = {{")
+        
         for cell_idx in range(total_cells):
             region = next(r for r in self.cell_regions if r['cell_id'] == cell_idx)
-            coords = []
-            for pixel_idx in region['pixels']:
-                y = pixel_idx // 324  # Image width
-                x = pixel_idx % 324
-                coords.append(f"{{{x}, {y}}}")  # Remove extra braces
+            x_min, y_min, x_max, y_max = region['bounds']
+            center_x, center_y = region['center']
+            area = (x_max - x_min + 1) * (y_max - y_min + 1)  # Calculate cell area
             
-            coords_str = ", ".join(coords)
-            header_content.append(f"constexpr PixelCoord kTofCell{cell_idx}Pixels[] = {{ {coords_str} }};")
-            header_content.append(f"constexpr size_t kTofCell{cell_idx}PixelCount = {len(coords)};")
-            header_content.append("")
-
-        # Create the mapping structure that references the pixel arrays
-        header_content.append("struct TofCellMapping {")
-        header_content.append("    const PixelCoord* pixels;")
-        header_content.append("    const size_t count;")
-        header_content.append("};")
-        header_content.append("")
-        
-        # Create the lookup array
-        header_content.append("// Mapping from TOF cell ID to corresponding RGB pixel coordinates")
-        header_content.append(f"constexpr std::array<TofCellMapping, kTofCellCount> kTofRgbMap = {{")
-        
-        for cell_idx in range(total_cells):
-            header_content.append(f"    {{ kTofCell{cell_idx}Pixels, kTofCell{cell_idx}PixelCount }},  // Cell {cell_idx}")
+            header_content.append(f"    {{ {x_min}, {y_min}, {x_max}, {y_max}, {center_x}, {center_y}, {area} }},  // Cell {cell_idx}")
         
         header_content.append("}};")
         header_content.append("")
+        
+        header_content.append("")
+        
         header_content.append("}  // namespace coralmicro")
         
         # Write to file
@@ -904,7 +897,8 @@ class Visualizer:
                 depth_path = os.path.join("saved_images", depth_filename)
 
                 with open(depth_path, 'w') as f:
-                    json.dump(self.tof_subscriber.get_tof_data(), f)
+                    np_data = np.array(self.tof_subscriber.get_tof_data()['distances'])
+                    json.dump(np_data.tolist(), f)
 
             self.status_var.set(f"Status: Image saved to {img_path}")
 
