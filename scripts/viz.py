@@ -69,7 +69,6 @@ class CameraCalibrationParams:
         except Exception as e:
             raise e
 
-
 class CameraSubscriber:
     """Handles camera data acquisition"""
 
@@ -154,7 +153,6 @@ class CameraSubscriber:
         except Exception as e:
             self.logger.error(f"Error getting camera frame: {e}")
             return None
-
 
 class TofSubscriber:
     """Handles TOF data acquisition and visualization"""
@@ -819,6 +817,7 @@ class Visualizer:
                    command=self.quit).pack(side=tk.RIGHT)
         ttk.Button(btn_frame, text="Save Image",
                    command=self.save_image).pack(side=tk.RIGHT)
+        ttk.Button(btn_frame, text="Save Sample", command=self.save_sample_data).pack(side=tk.RIGHT)
 
         self.root.protocol("WM_DELETE_WINDOW", self.quit)
 
@@ -827,6 +826,7 @@ class Visualizer:
         self.status_var.set(f"Status: Switched to {self.current_topic}")
 
     def update_display(self):
+
         if self.current_topic == Topic.CAMERA.value:
             image = self.camera_subscriber.get_rgb_frame()
 
@@ -873,6 +873,37 @@ class Visualizer:
 
         # Schedule next update
         self.root.after(33, self.update_display)  # ~30 FPS
+
+    def save_sample_data(self, number_of_samples=10):
+        """
+        Save the TOF distances for n times
+        """
+        current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        # Make a dir for these 10 sampels within the saved_samples dir
+        filepath = os.path.join("saved_samples", current_time)
+
+        os.makedirs(filepath, exist_ok=True)
+
+        for i in range(number_of_samples):
+            tof_data = self.tof_subscriber.get_tof_data()
+            if not tof_data:
+                self.status_var.set(f"Status: Error getting TOF data for sample {i}")
+                return
+
+            with open(f"{filepath}/sample_{i}.json", 'w') as f:
+                np_data = np.array(tof_data['distances'])
+                json.dump(np_data.tolist(), f)
+
+        # Make an empty gt.txt file for ground truth to be fille in
+        with open(f"{filepath}/gt.txt", 'w') as f:
+            f.write("")
+
+        
+
+        self.status_var.set(f"Status: Saved {number_of_samples} samples to {filepath}")
+
+        
 
     def save_image(self):
         current_time = datetime.now().strftime("%Y%m%d_%H%M%S") 
