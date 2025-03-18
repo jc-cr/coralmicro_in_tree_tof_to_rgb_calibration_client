@@ -1,0 +1,22 @@
+ToF Sensor Analysis Summary
+==========================
+
+Data analyzed from: saved_samples
+Number of distances: 12
+Distance range: 404mm to 3904mm
+
+Most accurate sensors (by RMSE):
+  1. Sensor 10: RMSE = 6.74mm
+  2. Sensor 9: RMSE = 7.99mm
+  3. Sensor 6: RMSE = 11.05mm
+
+Least accurate sensors (by RMSE):
+  1. Sensor 4: RMSE = 30.36mm
+  2. Sensor 0: RMSE = 38.44mm
+  3. Sensor 15: RMSE = 58.83mm
+
+Recommended weights (based on RMSE):
+  0.0266 0.0358 0.0588 0.0534
+  0.0336 0.0567 0.0924 0.0747
+  0.0520 0.1279 0.1515 0.0469
+  0.0383 0.0834 0.0506 0.0174

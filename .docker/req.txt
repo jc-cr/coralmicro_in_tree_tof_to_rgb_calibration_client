@@ -3,3 +3,5 @@ opencv-python>=4.5.0
 pillow>=8.0.0
 requests>=2.25.0
 eel
+matplotlib
+pandas
