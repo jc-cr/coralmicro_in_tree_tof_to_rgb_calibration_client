@@ -411,6 +411,11 @@ class AlignedDepthPublisher:
             
             # Calculate and store cell pixel mappings
             self.cell_regions = self.__calculate_cell_pixels()
+
+            # DEBUG log info the bounds of each cell
+            for region in self.cell_regions:
+                self.logger.debug(f"Cell {region['cell_id']} bounds: {region['bounds']}")
+
             
             # Generate header file if needed
             self.__generate_tof_rgb_mapping()
@@ -602,7 +607,7 @@ class AlignedDepthPublisher:
         header_content.append("};")
         header_content.append("")
         
-        # Create array of cell regions
+        # Create array of cell regions - using the explicit struct name for clarity
         header_content.append("// Mapping of TOF cell regions (bounds, center, and area)")
         header_content.append(f"constexpr std::array<TofCellRegion, kTofCellCount> kTofCellRegions = {{")
         
@@ -612,11 +617,34 @@ class AlignedDepthPublisher:
             center_x, center_y = region['center']
             area = (x_max - x_min + 1) * (y_max - y_min + 1)  # Calculate cell area
             
-            header_content.append(f"    {{ {x_min}, {y_min}, {x_max}, {y_max}, {center_x}, {center_y}, {area} }},  // Cell {cell_idx}")
+            # Use explicit struct name to avoid initialization issues
+            header_content.append(f"    TofCellRegion{{{x_min}, {y_min}, {x_max}, {y_max}, {center_x}, {center_y}, {area}}},  // Cell {cell_idx}")
         
-        header_content.append("}};")
+        header_content.append("};")
         header_content.append("")
         
+        # Add a helper function for checking overlap
+        header_content.append("// Helper function to check if two rectangles overlap")
+        header_content.append("inline constexpr bool rectangles_overlap(")
+        header_content.append("    uint16_t x1_min, uint16_t y1_min, uint16_t x1_max, uint16_t y1_max,")
+        header_content.append("    uint16_t x2_min, uint16_t y2_min, uint16_t x2_max, uint16_t y2_max) {")
+        header_content.append("    return (x1_min <= x2_max && x1_max >= x2_min &&")
+        header_content.append("            y1_min <= y2_max && y1_max >= y2_min);")
+        header_content.append("}")
+        header_content.append("")
+        
+        # Add a helper function for calculating overlap area
+        header_content.append("// Helper function to calculate the area of overlap between two rectangles")
+        header_content.append("inline constexpr uint32_t overlap_area(")
+        header_content.append("    uint16_t x1_min, uint16_t y1_min, uint16_t x1_max, uint16_t y1_max,")
+        header_content.append("    uint16_t x2_min, uint16_t y2_min, uint16_t x2_max, uint16_t y2_max) {")
+        header_content.append("    if (!rectangles_overlap(x1_min, y1_min, x1_max, y1_max, x2_min, y2_min, x2_max, y2_max)) {")
+        header_content.append("        return 0;")
+        header_content.append("    }")
+        header_content.append("    uint16_t overlap_width = std::min(x1_max, x2_max) - std::max(x1_min, x2_min) + 1;")
+        header_content.append("    uint16_t overlap_height = std::min(y1_max, y2_max) - std::max(y1_min, y2_min) + 1;")
+        header_content.append("    return overlap_width * overlap_height;")
+        header_content.append("}")
         header_content.append("")
         
         header_content.append("}  // namespace coralmicro")
@@ -626,35 +654,7 @@ class AlignedDepthPublisher:
             f.write("\n".join(header_content))
         
         return total_cells
-    
-    def __back_project_to_camera_frame(self, image_points, z_distance=1000):
-        """Back-project image points to camera frame at specified Z distance
-        
-        Args:
-            image_points: Array of [u,v] image coordinates
-            z_distance: Z distance in mm to project to (default 1m = 1000mm)
-            
-        Returns:
-            Array of [x,y,z] camera frame coordinates in mm
-        """
-        # Get inverse of camera matrix
-        K_inv = np.linalg.inv(self.camera_matrix)
-        
-        camera_points = []
-        for point in image_points:
-            # Convert to homogeneous coordinates
-            uv_homog = np.array([point[0], point[1], 1])
-            
-            # Back project to normalized coordinates
-            xyz_normalized = K_inv.dot(uv_homog)
-            
-            # Scale to desired Z distance
-            scale = z_distance / xyz_normalized[2]
-            xyz_camera = xyz_normalized * scale
-            
-            camera_points.append(xyz_camera)
-        
-        return np.array(camera_points)
+
 
     def __get_sensor_data(self):
         """Get synchronized sensor data from both TOF and RGB camera"""
@@ -902,8 +902,6 @@ class Visualizer:
         
 
         self.status_var.set(f"Status: Saved {number_of_samples} samples to {filepath}")
-
-        
 
     def save_image(self):
         current_time = datetime.now().strftime("%Y%m%d_%H%M%S") 
