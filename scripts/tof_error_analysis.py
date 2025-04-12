@@ -164,7 +164,7 @@ def plot_error_vs_distance(data, output_path, grid_size=(4, 4)):
     
     # Plot each sensor with a unique style combination
     for i in range(num_sensors):
-        sensor_label = f"Sensor {i}"  # Use the sensor ID (0-15)
+        sensor_label = f"cell {i}"  # Use the sensor ID (0-15)
         line_style = line_styles[i % len(line_styles)]
         marker = markers[i % len(markers)]
         plt.plot(ground_truths, abs_errors[:, i], 
@@ -174,7 +174,7 @@ def plot_error_vs_distance(data, output_path, grid_size=(4, 4)):
     
     plt.xlabel('Ground Truth Distance (mm)', fontsize=14)
     plt.ylabel('Absolute Error (mm)', fontsize=14)
-    plt.title('Sensor Absolute Error vs Distance', fontsize=16)
+    plt.title('Cell Absolute Error vs Distance', fontsize=16)
     plt.grid(True, alpha=0.3)
     plt.xticks(fontsize=12)
     plt.yticks(fontsize=12)
@@ -242,12 +242,12 @@ def main():
         f.write(f"Number of distances: {len(data)}\n")
         f.write(f"Distance range: {min(data.keys())}mm to {max(data.keys())}mm\n\n")
         
-        f.write("Most accurate sensors (by RMSE):\n")
+        f.write("Most accurate cells (by RMSE):\n")
         sorted_indices = np.argsort(results['rmse'])
         for i, idx in enumerate(sorted_indices[:3]):
             f.write(f"  {i+1}. Sensor {idx}: RMSE = {results['rmse'][idx]:.2f}mm\n")
         
-        f.write("\nLeast accurate sensors (by RMSE):\n")
+        f.write("\nLeast accurate cells (by RMSE):\n")
         for i, idx in enumerate(sorted_indices[-3:]):
             f.write(f"  {i+1}. Sensor {idx}: RMSE = {results['rmse'][idx]:.2f}mm\n")
         
@@ -265,20 +265,20 @@ def main():
     
     # 2. Weights grid 
     weights_grid_path = os.path.join(args.output, "sensor_weights_grid.png")
-    plot_error_grid(results['weights'], 'Sensor Weights', weights_grid_path, 'RdYlGn')
+    plot_error_grid(results['weights'], 'Cell Weights', weights_grid_path, 'RdYlGn')
     
     # 3. Error vs distance plot
     error_vs_distance_path = os.path.join(args.output, "sensor_error_vs_distance.png")
     plot_error_vs_distance(data, error_vs_distance_path)
     
     # Print summary
-    print("\nMost accurate sensors (by RMSE):")
+    print("\nMost accurate cell (by RMSE):")
     for i, idx in enumerate(sorted_indices[:3]):
-        print(f"  {i+1}. Sensor {idx}: RMSE = {results['rmse'][idx]:.2f}mm")
+        print(f"  {i+1}. Cell {idx}: RMSE = {results['rmse'][idx]:.2f}mm")
     
-    print("\nLeast accurate sensors (by RMSE):")
+    print("\nLeast accurate cell (by RMSE):")
     for i, idx in enumerate(sorted_indices[-3:]):
-        print(f"  {i+1}. Sensor {idx}: RMSE = {results['rmse'][idx]:.2f}mm")
+        print(f"  {i+1}. Cell {idx}: RMSE = {results['rmse'][idx]:.2f}mm")
     
     print(f"\nAnalysis complete! Results saved to {args.output}/")
 

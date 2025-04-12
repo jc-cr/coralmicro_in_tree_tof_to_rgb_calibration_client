@@ -5,12 +5,12 @@ Data analyzed from: saved_samples
 Number of distances: 12
 Distance range: 404mm to 3904mm
 
-Most accurate sensors (by RMSE):
+Most accurate cells (by RMSE):
   1. Sensor 10: RMSE = 6.74mm
   2. Sensor 9: RMSE = 7.99mm
   3. Sensor 6: RMSE = 11.05mm
 
-Least accurate sensors (by RMSE):
+Least accurate cells (by RMSE):
   1. Sensor 4: RMSE = 30.36mm
   2. Sensor 0: RMSE = 38.44mm
   3. Sensor 15: RMSE = 58.83mm
