@@ -1,16 +1,37 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import matplotlib.pyplot as plt
 import json
 import os
 import glob
 import argparse
+
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+from matplotlib import font_manager
 from matplotlib.colors import LinearSegmentedColormap
 
-# Set matplotlib to use non-interactive backend for headless environments
 import matplotlib
 matplotlib.use('Agg')
+
+
+plt.rcParams['figure.figsize'] = (12, 8)  # Larger default figure size
+plt.rcParams["figure.autolayout"]  = True
+plt.rcParams["figure.dpi"] = 300
+
+
+
+# Set font with fallbacks to system fonts
+plt.rcParams['font.family'] = 'serif'
+
+plt.rcParams['font.size'] = 14  # Base font size
+plt.rcParams['axes.titlesize'] = 18  # Title font size
+plt.rcParams['axes.labelsize'] = 16  # Axes labels font size
+plt.rcParams['xtick.labelsize'] = 14  # X-axis tick labels
+plt.rcParams['ytick.labelsize'] = 14  # Y-axis tick labels
+plt.rcParams['legend.fontsize'] = 14  # Legend font size
+plt.rcParams['figure.titlesize'] = 20  # Figure title size
+
 
 def load_data_from_directory(base_dir):
     """
